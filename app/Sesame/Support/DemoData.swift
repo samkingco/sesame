@@ -92,6 +92,34 @@ import SwiftData
                 #endif
             }
 
+            #if ICLOUD_CAPABLE
+                // Always clean the demo iCloud dir to prevent leftover files from previous runs
+                let dir = FileManager.default.temporaryDirectory.appending(path: "icloud-demo/Documents")
+                try? FileManager.default.removeItem(at: dir)
+
+                if let countStr = ProcessInfo.processInfo.environment["SEED_ICLOUD_BACKUPS"],
+                   let count = Int(countStr), count > 0
+                {
+                    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+                    let fakeBackups: [(String, TimeInterval)] = [
+                        ("sams-iphone-k7x2m9ab.backup.sesame", -3600),
+                        ("sams-ipad-x1y2z3w4.backup.sesame", -86400),
+                        ("sesame-backup.sesame", -604800),
+                    ]
+
+                    for i in 0 ..< min(count, fakeBackups.count) {
+                        let (name, offset) = fakeBackups[i]
+                        let url = dir.appending(path: name)
+                        try? Data("fake-backup".utf8).write(to: url)
+                        try? FileManager.default.setAttributes(
+                            [.modificationDate: Date(timeIntervalSinceNow: offset)],
+                            ofItemAtPath: url.path()
+                        )
+                    }
+                }
+            #endif
+
             for entry in accounts {
                 let account = Account(
                     profileId: entry.profileId,

@@ -101,7 +101,7 @@ struct ExportBackupView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dateString = formatter.string(from: .now)
-        let filename = "sesame-backup-\(dateString).sesame"
+        let filename = "\(dateString).backup.sesame"
         let url = FileManager.default.temporaryDirectory.appending(path: filename)
         try blob.write(to: url)
         return url

@@ -47,8 +47,17 @@ final class BackupService {
         defaults.set(Date.now, forKey: Self.lastBackupPrefix + adapter.adapterKey)
     }
 
-    func retrieve(using adapter: BackupAdapter, password: String) async throws -> BackupPayload {
-        let blob = try await adapter.retrieve()
+    /// Decrypt backup data. Uses the provided password, or falls back to the
+    /// stored password for the adapter. Throws if neither is available or decryption fails.
+    func unlock(data: Data, for adapterKey: String, password: String? = nil) async throws -> BackupPayload {
+        guard let resolvedPassword = password ?? storedBackupPassword(for: adapterKey) else {
+            throw RestoreError.passwordRequired
+        }
+        return try await RestoreService.decryptPayload(data: data, password: resolvedPassword)
+    }
+
+    func retrieve(using adapter: BackupAdapter, id: String, password: String) async throws -> BackupPayload {
+        let blob = try await adapter.retrieve(id: id)
         // Argon2 key derivation is CPU-intensive; avoid blocking MainActor
         let jsonData = try await Task.detached {
             try BackupCrypto.decrypt(blob: blob, password: password)

@@ -43,7 +43,7 @@ to_test_name() {
     }'
 }
 
-# List all recipe test functions by scanning RecipeTests.swift
+# List all recipe test functions from RecipeTests.swift
 list_recipes() {
     grep -oE 'func test[A-Za-z0-9]+\(\)' "$PROJECT_DIR/app/SesameScreenshots/RecipeTests.swift" \
         | sed 's/func test//; s/()//' \

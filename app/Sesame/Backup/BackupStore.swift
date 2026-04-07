@@ -17,6 +17,7 @@ final class BackupStore {
 
     private static let configuredPrefix = UserDefaultsKey.backupConfiguredPrefix
     private static let autoBackupEnabledPrefix = UserDefaultsKey.backupAutoBackupEnabledPrefix
+    private static let filenamePrefix = UserDefaultsKey.backupFilenamePrefix
     static let recoveryKeyWarningShownKey = UserDefaultsKey.backupRecoveryKeyWarningShown
 
     var recoveryKeyWarningShown: Bool {
@@ -34,6 +35,10 @@ final class BackupStore {
         self.defaults = defaults
     }
 
+    func adapter(for key: String) -> BackupAdapter? {
+        adapters.first { $0.adapterKey == key }
+    }
+
     // MARK: - Per-adapter state
 
     func isConfigured(for adapter: BackupAdapter) -> Bool {
@@ -49,6 +54,10 @@ final class BackupStore {
         backupService.lastDeviceBackupDate(for: adapter.adapterKey)
     }
 
+    func backupFilename(for adapter: BackupAdapter) -> String? {
+        defaults.string(forKey: Self.filenamePrefix + adapter.adapterKey)
+    }
+
     func setAutoBackupEnabled(_ enabled: Bool, for adapter: BackupAdapter) {
         let enabledKey = Self.autoBackupEnabledPrefix + adapter.adapterKey
         let configuredKey = Self.configuredPrefix + adapter.adapterKey
@@ -56,11 +65,23 @@ final class BackupStore {
         defaults.set(enabled, forKey: enabledKey)
         if enabled {
             defaults.set(true, forKey: configuredKey)
+            ensureBackupFilename(for: adapter)
         } else {
             debounceTask?.cancel()
             debounceTask = nil
         }
     }
+
+    #if ICLOUD_CAPABLE
+        private func ensureBackupFilename(for adapter: BackupAdapter) {
+            let key = Self.filenamePrefix + adapter.adapterKey
+            guard defaults.string(forKey: key) == nil else { return }
+            let filename = ICloudBackupAdapter.generateBackupFilename()
+            defaults.set(filename, forKey: key)
+        }
+    #else
+        private func ensureBackupFilename(for adapter: BackupAdapter) {}
+    #endif
 
     // MARK: - Backup
 
@@ -101,8 +122,10 @@ final class BackupStore {
 
         let enabledKey = Self.autoBackupEnabledPrefix + adapter.adapterKey
         let configuredKey = Self.configuredPrefix + adapter.adapterKey
+        let filenameKey = Self.filenamePrefix + adapter.adapterKey
         defaults.set(false, forKey: enabledKey)
         defaults.set(false, forKey: configuredKey)
+        defaults.removeObject(forKey: filenameKey)
     }
 
     // MARK: - Auto-backup

@@ -12,12 +12,24 @@ protocol BackupAdapter: Sendable {
     /// Write an encrypted blob to the destination
     func store(blob: Data) async throws
 
-    /// Read the encrypted blob from the destination
-    func retrieve() async throws -> Data
+    /// Read an encrypted blob by its adapter-specific identifier.
+    /// The ID comes from `BackupFile.id` returned by `listBackups()`.
+    func retrieve(id: String) async throws -> Data
 
     /// Check if a backup exists and when it was last modified
     func lastDestinationBackupDate() async throws -> Date?
 
     /// Delete the backup from the destination
     func deleteBackup() async throws
+
+    /// List all backup files at the destination
+    func listBackups() throws -> [BackupFile]
+}
+
+struct BackupFile: Identifiable {
+    /// Opaque identifier — meaning is adapter-specific (e.g. filename, server UUID).
+    let id: String
+    /// Human-readable name for display in the UI.
+    let name: String
+    let modifiedAt: Date
 }

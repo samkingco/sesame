@@ -58,7 +58,7 @@
             storeCallCount += 1
         }
 
-        func retrieve() async throws -> Data {
+        func retrieve(id _: String) async throws -> Data {
             Data()
         }
 
@@ -67,6 +67,7 @@
         }
 
         func deleteBackup() async throws {}
+        func listBackups() throws -> [BackupFile] { [] }
     }
 
 #endif

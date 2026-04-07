@@ -61,7 +61,7 @@ struct BackupServiceTests {
         let service = makeService(context: context)
 
         try await service.backup(using: adapter, password: testPassword)
-        let payload = try await service.retrieve(using: adapter, password: testPassword)
+        let payload = try await service.retrieve(using: adapter, id: "mock", password: testPassword)
 
         #expect(payload.accounts.count == 1)
         #expect(payload.accounts[0].issuer == "GitHub")
@@ -93,7 +93,7 @@ struct BackupServiceTests {
         let service = makeService(context: context)
 
         try await service.backup(using: adapter, password: testPassword)
-        let payload = try await service.retrieve(using: adapter, password: testPassword)
+        let payload = try await service.retrieve(using: adapter, id: "mock", password: testPassword)
 
         #expect(payload.payloadVersion == 1)
         #expect(payload.profiles.count == 1)
@@ -199,7 +199,7 @@ struct BackupServiceTests {
         let testData = Data("test".utf8)
         try await adapter.store(blob: testData)
 
-        let retrieved = try await adapter.retrieve()
+        let retrieved = try await adapter.retrieve(id: "mock")
         #expect(retrieved == testData)
 
         let afterDate = try await adapter.lastDestinationBackupDate()
@@ -223,7 +223,7 @@ private final class MockAdapter: BackupAdapter {
         storedDate = .now
     }
 
-    func retrieve() async throws -> Data {
+    func retrieve(id _: String) async throws -> Data {
         guard let blob = storedBlob else {
             throw MockAdapterError.noBackup
         }
@@ -238,6 +238,8 @@ private final class MockAdapter: BackupAdapter {
         storedBlob = nil
         storedDate = nil
     }
+
+    func listBackups() throws -> [BackupFile] { [] }
 }
 
 private enum MockAdapterError: Error {

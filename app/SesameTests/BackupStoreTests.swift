@@ -298,7 +298,7 @@
             storeCallCount += 1
         }
 
-        func retrieve() async throws -> Data {
+        func retrieve(id _: String) async throws -> Data {
             Data()
         }
 
@@ -307,6 +307,9 @@
         }
 
         func deleteBackup() async throws {}
+        func listBackups() throws -> [BackupFile] {
+            []
+        }
     }
 
     private final class FailingBackupAdapter: BackupAdapter {
@@ -316,7 +319,7 @@
             throw NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "Simulated failure"])
         }
 
-        func retrieve() async throws -> Data {
+        func retrieve(id _: String) async throws -> Data {
             Data()
         }
 
@@ -325,6 +328,9 @@
         }
 
         func deleteBackup() async throws {}
+        func listBackups() throws -> [BackupFile] {
+            []
+        }
     }
 
 #endif

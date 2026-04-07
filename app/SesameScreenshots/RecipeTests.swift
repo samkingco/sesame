@@ -16,23 +16,23 @@ final class RecipeTests: XCTestCase {
         XCUIDevice.shared.appearance = .dark
         app = XCUIApplication()
         app.launchArguments = ["--video"]
-
-        // Freeze clock at demoDate (window boundary, 30s remaining)
-        RecipeHelper.setClockOffset(0)
-        app.launch()
-
-        let list = app.collectionViews.firstMatch
-        XCTAssertTrue(list.waitForExistence(timeout: 5))
     }
 
     override func tearDownWithError() throws {
         RecipeHelper.cleanupClockControl()
     }
 
-    // MARK: - Enlarged code: timer states
+    private func launchApp() {
+        RecipeHelper.setClockOffset(0)
+        app.launch()
+        let list = app.collectionViews.firstMatch
+        XCTAssertTrue(list.waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Enlarged code
 
     func testEnlargedCodeFresh() {
-        // 5s into window → 25s remaining (normal/white)
+        launchApp()
         RecipeHelper.setClockOffset(5)
         sleep(2)
         RecipeHelper.openEnlargedCode(issuer: "GitHub", app: app)
@@ -40,7 +40,7 @@ final class RecipeTests: XCTestCase {
     }
 
     func testEnlargedCodeWarning() {
-        // 22s into window → 8s remaining (orange)
+        launchApp()
         RecipeHelper.setClockOffset(22)
         sleep(2)
         RecipeHelper.openEnlargedCode(issuer: "GitHub", app: app)
@@ -48,7 +48,7 @@ final class RecipeTests: XCTestCase {
     }
 
     func testEnlargedCodeCritical() {
-        // 27s into window → 3s remaining (red)
+        launchApp()
         RecipeHelper.setClockOffset(27)
         sleep(2)
         RecipeHelper.openEnlargedCode(issuer: "GitHub", app: app)
@@ -58,15 +58,100 @@ final class RecipeTests: XCTestCase {
     // MARK: - Account list
 
     func testAccountListPersonal() {
+        launchApp()
         RecipeHelper.setClockOffset(5)
         sleep(2)
         RecipeHelper.saveScreenshot("account-list-personal")
     }
 
     func testAccountListStudio() {
+        launchApp()
         RecipeHelper.setClockOffset(5)
         sleep(2)
         RecipeHelper.switchProfile("Studio", app: app)
         RecipeHelper.saveScreenshot("account-list-studio")
+    }
+
+    // MARK: - Restore: iCloud
+
+    func testRestoreIcloudLoading() {
+        app.launchEnvironment["SEED_ICLOUD_BACKUPS"] = "3"
+        app.launchEnvironment["DEMO_ICLOUD_DELAY"] = "30"
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+        sleep(1)
+        RecipeHelper.saveScreenshot("restore-icloud-loading")
+    }
+
+    func testRestoreIcloudEmpty() {
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+        sleep(1)
+        RecipeHelper.saveScreenshot("restore-icloud-empty")
+    }
+
+    func testRestoreIcloudSingle() {
+        app.launchEnvironment["SEED_ICLOUD_BACKUPS"] = "1"
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+
+        let row = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS 'sams-iphone'")
+        ).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        sleep(1)
+
+        RecipeHelper.saveScreenshot("restore-icloud-single")
+    }
+
+    func testRestoreIcloudMultiple() {
+        app.launchEnvironment["SEED_ICLOUD_BACKUPS"] = "3"
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+
+        let firstRow = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS 'sams-iphone'")
+        ).firstMatch
+        XCTAssertTrue(firstRow.waitForExistence(timeout: 5))
+        firstRow.tap()
+        sleep(1)
+
+        RecipeHelper.saveScreenshot("restore-icloud-multiple")
+    }
+
+    // MARK: - Restore: file
+
+    func testRestoreFileUnselected() {
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+        RecipeHelper.saveScreenshot("restore-file-unselected")
+    }
+
+    func testRestoreFileSelected() {
+        app.launchEnvironment["DEMO_RESTORE_FILE"] = "2026-04-01.backup.sesame"
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+        sleep(1)
+        RecipeHelper.saveScreenshot("restore-file-selected")
+    }
+
+    func testRestoreWrongPassword() {
+        app.launchEnvironment["DEMO_RESTORE_FILE"] = "2026-04-01.backup.sesame"
+        launchApp()
+        RecipeHelper.openRestoreBackup(app: app)
+        sleep(1)
+
+        let passwordField = app.secureTextFields["Password"]
+        XCTAssertTrue(passwordField.waitForExistence(timeout: 3))
+        passwordField.tap()
+        passwordField.typeText("wrong-password")
+
+        let unlockButton = app.buttons["Unlock"]
+        XCTAssertTrue(unlockButton.waitForExistence(timeout: 3))
+        unlockButton.tap()
+        sleep(2)
+
+        RecipeHelper.saveScreenshot("restore-wrong-password")
     }
 }
