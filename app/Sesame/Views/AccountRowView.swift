@@ -61,7 +61,7 @@ struct AccountRowView: View {
         let chars = str.characters
         let start = chars.index(chars.startIndex, offsetBy: highlight.offset)
         let end = chars.index(start, offsetBy: highlight.length)
-        str[start..<end].backgroundColor = profileTint.opacity(colorScheme == .dark ? 0.35 : 0.2)
+        str[start ..< end].backgroundColor = profileTint.opacity(colorScheme == .dark ? 0.35 : 0.2)
         return str
     }
 }

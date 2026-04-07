@@ -49,7 +49,7 @@ private struct ExpandedView: View {
                 .bold()
                 .contentTransition(.numericText())
 
-            Text(timerInterval: Date.now...state.expiresAt, countsDown: true)
+            Text(timerInterval: Date.now ... state.expiresAt, countsDown: true)
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

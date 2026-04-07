@@ -64,8 +64,14 @@ struct CodeDetailView: View {
                             .font(.system(size: codeSize, design: .monospaced))
                             .foregroundStyle(colorState.color)
                             .contentTransition(.numericText())
-                            .animation(isCopied || reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration), value: colorState)
-                            .animation(reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration), value: rawCode)
+                            .animation(
+                                isCopied || reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration),
+                                value: colorState
+                            )
+                            .animation(
+                                reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration),
+                                value: rawCode
+                            )
 
                         if account.type == .hotp {
                             Button(
@@ -85,7 +91,10 @@ struct CodeDetailView: View {
                             .font(.subheadline.monospacedDigit())
                             .foregroundStyle(.secondary)
                             .contentTransition(.numericText())
-                            .animation(reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration), value: remainingSeconds)
+                            .animation(
+                                reduceMotion ? nil : .easeInOut(duration: CodeAnimation.duration),
+                                value: remainingSeconds
+                            )
                     }
 
                     Text(account.effectiveIssuer)

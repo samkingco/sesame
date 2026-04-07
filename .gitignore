@@ -30,6 +30,5 @@ site/dist/
 site/.astro/
 site/node_modules/
 
-# Generated screenshots and video recordings
-/app/screenshots/
-/app/videos/
+# Generated screenshots, video recordings, and recipe captures
+/media/

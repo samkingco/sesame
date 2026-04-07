@@ -6,11 +6,13 @@ final class VideoFlowTests: XCTestCase {
     private var recordStart: TimeInterval = 0
 
     private static let projectRoot = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-    private static let controlFile = projectRoot.appendingPathComponent("videos/.video-date")
-    private static let timingFile = projectRoot.appendingPathComponent("videos/.timing")
-    private static let recordStartFile = projectRoot.appendingPathComponent("videos/.record-start")
+        .deletingLastPathComponent() // SesameScreenshots/
+        .deletingLastPathComponent() // app/
+        .deletingLastPathComponent() // repo root
+    private static let controlDir = projectRoot.appendingPathComponent("media/.control")
+    private static let controlFile = controlDir.appendingPathComponent(".video-date")
+    private static let timingFile = controlDir.appendingPathComponent(".timing")
+    private static let recordStartFile = controlDir.appendingPathComponent(".record-start")
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -96,13 +98,14 @@ final class VideoFlowTests: XCTestCase {
 
     private func readRecordStart() -> TimeInterval {
         // Poll briefly — the shell writes this file right after recording starts
-        for _ in 0..<100 {
+        for _ in 0 ..< 100 {
             if let data = try? Data(contentsOf: Self.recordStartFile),
                let str = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-               let ts = Double(str) {
+               let ts = Double(str)
+            {
                 return ts
             }
-            usleep(50_000)
+            usleep(50000)
         }
         // Fallback: use current time (offsets will be ~0-based)
         return Date().timeIntervalSince1970
