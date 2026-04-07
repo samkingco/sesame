@@ -96,5 +96,4 @@ enum RecipeHelper {
         restoreButton.tap()
         usleep(500_000)
     }
-
 }

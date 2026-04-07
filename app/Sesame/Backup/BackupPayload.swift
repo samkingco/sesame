@@ -1,13 +1,13 @@
 import Foundation
 
-struct BackupPayload: Codable {
+struct BackupPayload: Codable, Hashable {
     let payloadVersion: Int
     let createdAt: Date
     let profiles: [BackupProfile]
     let accounts: [BackupAccount]
 }
 
-struct BackupAccount: Codable {
+struct BackupAccount: Codable, Hashable {
     let id: UUID
     let profileId: UUID
     let issuer: String
@@ -32,7 +32,7 @@ struct BackupAccount: Codable {
     }
 }
 
-struct BackupProfile: Codable {
+struct BackupProfile: Codable, Hashable {
     let id: UUID
     let name: String
     let color: String?

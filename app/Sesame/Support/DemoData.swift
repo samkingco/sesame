@@ -105,7 +105,7 @@ import SwiftData
                     let fakeBackups: [(String, TimeInterval)] = [
                         ("sams-iphone-k7x2m9ab.backup.sesame", -3600),
                         ("sams-ipad-x1y2z3w4.backup.sesame", -86400),
-                        ("sesame-backup.sesame", -604800),
+                        ("sesame-backup.sesame", -604_800),
                     ]
 
                     for i in 0 ..< min(count, fakeBackups.count) {
@@ -114,7 +114,7 @@ import SwiftData
                         try? Data("fake-backup".utf8).write(to: url)
                         try? FileManager.default.setAttributes(
                             [.modificationDate: Date(timeIntervalSinceNow: offset)],
-                            ofItemAtPath: url.path()
+                            ofItemAtPath: url.path
                         )
                     }
                 }
