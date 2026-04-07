@@ -1,0 +1,39 @@
+---
+import PhoneFrame from "./PhoneFrame.astro";
+import { GITHUB_URL } from "../config";
+---
+
+<section class="mx-auto max-w-5xl px-6">
+  <div class="overflow-hidden rounded-3xl bg-seed/2 border-seed/5 border py-16 md:py-24">
+    <PhoneFrame />
+  </div>
+
+  <div class="mx-auto max-w-3xl space-y-10 py-24">
+    <p class="text-2xl font-semibold md:text-3xl">
+      Feels like it came with your phone. 2FA the way it should be. Fast, light, and familiar.
+    </p>
+
+    <p class="text-2xl font-semibold md:text-3xl">
+      Profiles for personal, work, side projects, or however you organise your life.
+    </p>
+
+    <p class="text-2xl font-semibold md:text-3xl">
+      Enable iCloud backups to give you peace of mind. Or backup to an encrypted file you can store
+      wherever you like.
+    </p>
+
+    <p class="text-2xl font-semibold md:text-3xl">
+      Works with Siri and Spotlight. Search is instant. Fully private and secure.
+    </p>
+
+    <p class="text-2xl font-semibold md:text-3xl">
+      Free and <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="underline decoration-dashed decoration-seed/30 hover:decoration-seed transition"
+        >open source</a
+      >. Read it, build it, audit it.
+    </p>
+  </div>
+</section>

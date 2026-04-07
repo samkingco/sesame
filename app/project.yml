@@ -1,0 +1,257 @@
+name: Sesame
+settings:
+  base:
+    SESAME_APP_BUNDLE_ID: studio.samking.Sesame
+options:
+  bundleIdPrefix: studio.samking
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "14.0"
+  generateEmptyDirectories: true
+configFiles:
+  Debug: Development.xcconfig
+  Release: Development.xcconfig
+targets:
+  CArgon2:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: Vendor/CArgon2/src
+        headerVisibility: project
+      - path: Vendor/CArgon2/include
+        headerVisibility: public
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/Vendor/CArgon2/include
+          - $(SRCROOT)/Vendor/CArgon2/src
+        MODULEMAP_FILE: $(SRCROOT)/Vendor/CArgon2/include/module.modulemap
+        GCC_WARN_INHIBIT_ALL_WARNINGS: true
+  Sesame:
+    type: application
+    platform: iOS
+    sources: [Sesame]
+    info:
+      path: Sesame/Info.plist
+      properties:
+        AppGroupID: $(APP_GROUP_ID)
+        ICloudContainerID: $(ICLOUD_CONTAINER_ID)
+        BGTaskSchedulerPermittedIdentifiers:
+          - $(SESAME_APP_BUNDLE_ID).purgeExpired
+        CFBundleURLTypes:
+          - CFBundleURLName: OTP Auth
+            CFBundleURLSchemes:
+              - otpauth
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: studio.samking.sesame-backup
+            UTTypeDescription: Sesame Encrypted Backup
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - sesame
+    dependencies:
+      - target: CArgon2
+      - target: SesameWidgets
+      - target: SesameAutoFill
+    postBuildScripts:
+      - script: |
+          if command -v swiftlint >/dev/null 2>&1; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+    entitlements:
+      path: Sesame/Sesame.entitlements
+      properties:
+        com.apple.developer.authentication-services.autofill-credential-provider: true
+        com.apple.developer.icloud-services:
+          - CloudDocuments
+        com.apple.developer.ubiquity-container-identifiers:
+          - $(ICLOUD_CONTAINER_ID)
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)$(SESAME_APP_BUNDLE_ID)
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_EMIT_LOC_STRINGS: true
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
+        INFOPLIST_KEY_NSCameraUsageDescription: "Sesame uses the camera to scan QR codes for adding 2FA accounts."
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "Sesame uses Face ID to protect your accounts."
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIRequiresFullScreen: true
+        INFOPLIST_KEY_NSSupportsLiveActivities: true
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEMO_ENABLED AUTOFILL_CAPABLE ICLOUD_CAPABLE APPGROUP_CAPABLE"
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) AUTOFILL_CAPABLE ICLOUD_CAPABLE APPGROUP_CAPABLE"
+  SesameWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - SesameWidgets
+      - path: Sesame/Models/CopiedCodeAttributes.swift
+        group: Shared
+      - path: Sesame/Models/OTPTypes.swift
+        group: Shared
+      - path: Sesame/Utilities/CodeDisplayHelpers.swift
+        group: Shared
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_FILE: SesameWidgets/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        PRODUCT_BUNDLE_IDENTIFIER: $(SESAME_APP_BUNDLE_ID).SesameWidgets
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: "Sesame Widgets"
+  SesameAutoFill:
+    type: app-extension
+    platform: iOS
+    sources:
+      - SesameAutoFill
+      - path: Sesame/Models/Account.swift
+        group: Shared
+      - path: Sesame/Models/OTPTypes.swift
+        group: Shared
+      - path: Sesame/Models/Profile.swift
+        group: Shared
+      - path: Sesame/Crypto/Base32.swift
+        group: Shared
+      - path: Sesame/Crypto/OTPGenerator.swift
+        group: Shared
+      - path: Sesame/Support/SharedModelContainer.swift
+        group: Shared
+    entitlements:
+      path: SesameAutoFill/SesameAutoFill.entitlements
+      properties:
+        com.apple.developer.authentication-services.autofill-credential-provider: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)$(SESAME_APP_BUNDLE_ID)
+    info:
+      path: SesameAutoFill/Info.plist
+      properties:
+        AppBundleID: $(SESAME_APP_BUNDLE_ID)
+        AppIdentifierPrefix: $(AppIdentifierPrefix)
+        AppGroupID: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.authentication-services-credential-provider-ui
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).CredentialProviderViewController
+          NSExtensionAttributes:
+            ASCredentialProviderExtensionCapabilities:
+              ProvidesOneTimeCodes: true
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+        PRODUCT_BUNDLE_IDENTIFIER: $(SESAME_APP_BUNDLE_ID).SesameAutoFill
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: "Sesame AutoFill"
+  CArgon2macOS:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Vendor/CArgon2/src
+        headerVisibility: project
+      - path: Vendor/CArgon2/include
+        headerVisibility: public
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/Vendor/CArgon2/include
+          - $(SRCROOT)/Vendor/CArgon2/src
+        MODULEMAP_FILE: $(SRCROOT)/Vendor/CArgon2/include/module.modulemap
+        GCC_WARN_INHIBIT_ALL_WARNINGS: true
+  SesameDecrypt:
+    type: tool
+    platform: macOS
+    productName: sesame-decrypt
+    sources:
+      - path: Tools/SesameDecrypt
+    dependencies:
+      - target: CArgon2macOS
+    settings:
+      base:
+        PRODUCT_NAME: sesame-decrypt
+  SesameTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [SesameTests]
+    dependencies:
+      - target: Sesame
+      - target: CArgon2
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ICLOUD_CAPABLE"
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ICLOUD_CAPABLE"
+  SesameUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [SesameUITests]
+    dependencies:
+      - target: Sesame
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+  SesameScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [SesameScreenshots]
+    dependencies:
+      - target: Sesame
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+schemes:
+  Sesame:
+    build:
+      targets:
+        Sesame: all
+        SesameAutoFill: all
+    run:
+      config: Debug
+    test:
+      targets:
+        - SesameTests
+    profile:
+      config: Release
+    archive:
+      config: Release
+  SesameDecrypt:
+    build:
+      targets:
+        SesameDecrypt: all
+    run:
+      config: Debug
+  SesameUITests:
+    build:
+      targets:
+        Sesame: all
+        SesameUITests: [test]
+    test:
+      targets:
+        - SesameUITests
+  SesameScreenshots:
+    build:
+      targets:
+        Sesame: all
+        SesameScreenshots: [test]
+    test:
+      targets:
+        - SesameScreenshots

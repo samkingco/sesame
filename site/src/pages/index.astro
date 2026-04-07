@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import WhySesame from "../components/WhySesame.astro";
+import FAQ from "../components/FAQ.astro";
+import Download from "../components/Download.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Base title="Sesame — Two-factor authentication for iOS">
+  <Header />
+  <main>
+    <Hero />
+    <div id="below-hero">
+      <WhySesame />
+      <FAQ />
+      <Download />
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { runIntro } from "../lib/intro";
+
+  if (document.documentElement.hasAttribute("data-intro")) {
+    runIntro();
+  }
+</script>

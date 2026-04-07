@@ -1,0 +1,307 @@
+---
+import Base from "../../layouts/Base.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+---
+
+<Base title="Dashboard — Gomashio Industries" description="Gomashio Industries weekly dashboard.">
+  <Header />
+  <main class="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8">
+    <header class="flex flex-col-reverse gap-6 md:flex-row md:items-start md:justify-between">
+      <div>
+        <p class="text-sm">Gomashio Industries</p>
+        <h1 class="text-xl font-bold">Weekly dashboard</h1>
+      </div>
+      <p class="text-sm">
+        <span id="account-name"></span>
+        <span aria-hidden="true" class="opacity-40">&bull;</span>
+        <a
+          href="/demo"
+          class="underline decoration-dashed decoration-seed/30 hover:decoration-seed transition"
+          >Log out</a
+        >
+      </p>
+    </header>
+
+    <!-- Stats row -->
+    <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs">Sesame Index</p>
+        <p class="mt-1 text-xl sm:text-2xl font-bold" id="stat-index"></p>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs">Seeds roasted</p>
+        <p class="mt-1 text-xl sm:text-2xl font-bold" id="stat-roasted"></p>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs">Gomashio output (kg)</p>
+        <p class="mt-1 text-xl sm:text-2xl font-bold" id="stat-output"></p>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs">Hulling efficiency</p>
+        <p class="mt-1 text-xl sm:text-2xl font-bold" id="stat-efficiency"></p>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4 flex flex-col">
+        <div class="flex items-baseline justify-between border-b border-black/5 pb-3">
+          <p class="text-xs">Sesame Index — 7 day</p>
+          <p class="text-xs">
+            <span class="inline-block w-3 border-t border-dashed border-current align-middle"
+            ></span>
+            prev
+          </p>
+        </div>
+        <div class="mt-3 flex-1 grid grid-cols-[auto_1fr] grid-rows-[auto_1fr_auto] gap-x-2">
+          <span id="index-max" class="text-xs col-start-1 row-start-1"></span>
+          <svg
+            id="chart-index"
+            viewBox="0 0 320 120"
+            class="col-start-2 row-start-1 row-span-3 w-full"
+            fill="none"></svg>
+          <span id="index-min" class="text-xs col-start-1 row-start-3"></span>
+        </div>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4 flex flex-col">
+        <p class="text-xs border-b border-black/5 pb-3">Daily gomashio output (kg)</p>
+        <div class="mt-3 flex-1 grid grid-cols-[auto_1fr] grid-rows-[auto_1fr_auto] gap-x-2">
+          <span id="output-max" class="text-xs col-start-1 row-start-1"></span>
+          <svg
+            id="chart-output"
+            viewBox="0 0 320 120"
+            class="col-start-2 row-start-1 row-span-3 w-full"
+            fill="none"></svg>
+          <span class="text-xs col-start-1 row-start-3">0</span>
+          <div class="mt-1 flex text-xs col-start-2 row-start-4" id="bar-labels"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs border-b border-black/5 pb-3">Top varietals</p>
+        <ul class="mt-3 space-y-2 text-sm" id="varietals"></ul>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs border-b border-black/5 pb-3">Procurement alerts</p>
+        <ul class="mt-3 space-y-2 text-sm" id="alerts"></ul>
+      </div>
+      <div class="rounded-xl ring-1 ring-black/5 bg-white p-4">
+        <p class="text-xs border-b border-black/5 pb-3">Grind queue</p>
+        <ul class="mt-3 space-y-2 text-sm" id="grind-queue"></ul>
+      </div>
+    </div>
+
+    <p class="mt-8 text-center text-sm opacity-70">
+      This is a <a
+        href="/demo"
+        class="underline decoration-dashed decoration-seed/30 hover:decoration-seed transition"
+        >demo</a
+      > only.
+    </p>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { getAccount } from "../../lib/demo-accounts";
+
+  function seededRandom(seed: number) {
+    return () => {
+      seed = (seed * 16807 + 0) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+  }
+
+  function smoothPath(points: { x: number; y: number }[]): string {
+    let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const midX = (points[i].x + points[i + 1].x) / 2;
+      const midY = (points[i].y + points[i + 1].y) / 2;
+      if (i === 0) {
+        d += ` Q ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}, ${midX.toFixed(1)} ${midY.toFixed(1)}`;
+      } else {
+        d += ` T ${midX.toFixed(1)} ${midY.toFixed(1)}`;
+      }
+    }
+    const last = points[points.length - 1];
+    d += ` T ${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+    return d;
+  }
+
+  function mapValues(
+    values: number[],
+    w: number,
+    h: number,
+    globalMin?: number,
+    globalMax?: number,
+  ) {
+    const min = globalMin ?? Math.min(...values);
+    const max = globalMax ?? Math.max(...values);
+    const range = max - min || 1;
+    return values.map((v, i) => ({
+      x: (i / (values.length - 1)) * w,
+      y: h - ((v - min) / range) * h,
+    }));
+  }
+
+  function sparkline(svgId: string, current: number[], previous: number[], color: string) {
+    const svg = document.getElementById(svgId)!;
+    const allVals = [...current, ...previous];
+    const min = Math.min(...allVals);
+    const max = Math.max(...allVals);
+
+    document.getElementById("index-max")!.textContent = Math.round(max).toString();
+    document.getElementById("index-min")!.textContent = Math.round(min).toString();
+
+    const prevPoints = mapValues(previous, 320, 120, min, max);
+    const currPoints = mapValues(current, 320, 120, min, max);
+
+    // Previous period (dashed)
+    const prevLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    prevLine.setAttribute("d", smoothPath(prevPoints));
+    prevLine.setAttribute("stroke", color);
+    prevLine.setAttribute("stroke-width", "1");
+    prevLine.setAttribute("stroke-dasharray", "3 3");
+    prevLine.setAttribute("opacity", "0.2");
+    prevLine.setAttribute("fill", "none");
+    svg.appendChild(prevLine);
+
+    // Current period
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    line.setAttribute("d", smoothPath(currPoints));
+    line.setAttribute("stroke", color);
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("stroke-linejoin", "round");
+    line.setAttribute("fill", "none");
+    svg.appendChild(line);
+  }
+
+  function barChart(svgId: string, values: number[], color: string, labels: string[]) {
+    const svg = document.getElementById(svgId)!;
+    const w = 320;
+    const h = 120;
+    const pad = 16;
+    const max = Math.max(...values);
+    const barW = 20;
+    const totalBars = values.length * barW;
+    const gap = (w - pad - totalBars) / (values.length - 1);
+
+    document.getElementById("output-max")!.textContent = Math.round(max).toString();
+
+    // Calculate bar/gap percentages to align labels with bars
+    const barPct = (barW / w) * 100;
+    const gapPct = (gap / w) * 100;
+    document.getElementById("bar-labels")!.innerHTML = labels
+      .map((l, i) => {
+        const ml = i === 0 ? 0 : gapPct;
+        return `<span style="width:${barPct.toFixed(2)}%;margin-left:${ml.toFixed(2)}%;text-align:center">${l}</span>`;
+      })
+      .join("");
+
+    values.forEach((v, i) => {
+      const barH = (v / max) * (h - 8);
+      const x = i * (barW + gap);
+      const y = h - barH;
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", x.toFixed(1));
+      rect.setAttribute("y", y.toFixed(1));
+      rect.setAttribute("width", barW.toFixed(1));
+      rect.setAttribute("height", barH.toFixed(1));
+      rect.setAttribute("rx", "3");
+      rect.setAttribute("fill", color);
+      rect.setAttribute("opacity", "0.15");
+      svg.appendChild(rect);
+    });
+  }
+
+  function init() {
+    const params = new URLSearchParams(window.location.search);
+    const accountId = params.get("account");
+
+    if (!accountId) {
+      window.location.href = "/demo";
+      return;
+    }
+
+    const account = getAccount(accountId);
+    if (!account) {
+      window.location.href = "/demo";
+      return;
+    }
+
+    document.getElementById("account-name")!.textContent = `${account.name} `;
+
+    // Seeded random from account id for consistent numbers per account
+    const rand = seededRandom(parseInt(account.id, 16) || 42);
+
+    // Stats
+    const indexVal = (180 + rand() * 40).toFixed(2);
+    const roasted = (Math.floor(1.2 + rand() * 0.5) + rand()).toFixed(1) + "M";
+    const gomashio = Math.floor(800 + rand() * 400).toLocaleString();
+    const efficiency = (91 + rand() * 8).toFixed(1) + "%";
+
+    document.getElementById("stat-index")!.textContent = indexVal;
+    document.getElementById("stat-roasted")!.textContent = roasted;
+    document.getElementById("stat-output")!.textContent = gomashio;
+    document.getElementById("stat-efficiency")!.textContent = efficiency;
+
+    // Charts
+    const indexCurrent = Array.from({ length: 28 }, () => 170 + rand() * 50);
+    const indexPrevious = Array.from({ length: 28 }, () => 170 + rand() * 50);
+    const outputData = Array.from({ length: 7 }, () => 80 + rand() * 60);
+    const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    sparkline("chart-index", indexCurrent, indexPrevious, "#140F07");
+    barChart("chart-output", outputData, "#140F07", dayLabels);
+
+    // Varietals
+    const varietals = [
+      { name: "White Hulled", pct: Math.floor(30 + rand() * 15) },
+      { name: "Black Unhulled", pct: Math.floor(20 + rand() * 10) },
+      { name: "Golden Roasted", pct: Math.floor(15 + rand() * 10) },
+      { name: "Brown Natural", pct: Math.floor(10 + rand() * 8) },
+    ];
+    document.getElementById("varietals")!.innerHTML = varietals
+      .map(
+        (v) =>
+          `<li class="flex justify-between"><span>${v.name}</span><span class="font-medium">${v.pct}%</span></li>`,
+      )
+      .join("");
+
+    // Alerts
+    const alertTexts = [
+      "White hulled stock below threshold",
+      "Salt delivery delayed 3d",
+      "Black sesame price up 12%",
+      "New nori flake supplier approved",
+    ];
+    const numAlerts = 2 + Math.floor(rand() * 2);
+    document.getElementById("alerts")!.innerHTML = alertTexts
+      .slice(0, numAlerts)
+      .map((a) => `<li>${a}</li>`)
+      .join("");
+
+    // Grind queue
+    const batches = [
+      "Batch #4021 — White Hulled",
+      "Batch #4022 — Black Roasted",
+      "Batch #4023 — Golden Natural",
+      "Batch #4024 — Brown Unhulled",
+    ];
+    const statuses = ["Grinding", "Queued", "Queued"];
+    document.getElementById("grind-queue")!.innerHTML = batches
+      .slice(0, 3)
+      .map(
+        (b, i) =>
+          `<li class="flex justify-between"><span>${b}</span><span class="text-xs font-medium">${statuses[i]}</span></li>`,
+      )
+      .join("");
+  }
+
+  init();
+</script>

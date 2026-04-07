@@ -1,0 +1,21 @@
+---
+import { Image } from "astro:assets";
+import bezel from "../assets/iphone-bezel.png";
+import demo from "../assets/demo.mp4";
+---
+
+<div
+  class="relative mx-auto w-60 sm:w-70 md:w-85"
+  style={`aspect-ratio: ${bezel.width} / ${bezel.height};`}
+>
+  <video autoplay loop muted playsinline class="absolute rounded-[35px] w-[90%] left-[5%] top-[2%]">
+    <source src={demo} type="video/mp4" />
+  </video>
+  <Image
+    src={bezel}
+    alt=""
+    width={340}
+    class="relative z-10 w-full pointer-events-none select-none"
+    loading="lazy"
+  />
+</div>

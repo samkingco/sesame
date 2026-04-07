@@ -1,0 +1,35 @@
+# Xcode
+app/*.xcodeproj
+app/build/
+app/DerivedData/
+*.xcuserstate
+*.xcworkspacedata
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Local dev config
+app/Development.xcconfig
+.claude/settings.local.json
+.local/
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# editor
+.zed
+
+# Astro
+site/dist/
+site/.astro/
+site/node_modules/
+
+# Generated screenshots and video recordings
+/app/screenshots/
+/app/videos/

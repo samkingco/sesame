@@ -1,0 +1,11 @@
+// Copy this file to Development.xcconfig and fill in your team ID.
+// Find it in Xcode: Settings > Accounts > your team > Team ID
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+
+// Required for iCloud backup and App Group features (paid Apple Developer account).
+// Register these in the Apple Developer portal under Identifiers.
+APP_GROUP_ID = group.your.app.group
+ICLOUD_CONTAINER_ID = iCloud.your.container.id
+
+// Uncomment to disable features requiring a paid Apple Developer account:
+// SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DEMO_ENABLED

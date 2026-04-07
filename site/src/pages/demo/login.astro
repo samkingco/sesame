@@ -1,0 +1,114 @@
+---
+import Base from "../../layouts/Base.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+---
+
+<Base
+  title="Log in — Gomashio Industries"
+  description="Log in to your Gomashio Industries account with Sesame two-factor authentication."
+>
+  <Header />
+  <main class="flex flex-1 flex-col items-center justify-center px-2 sm:px-6 py-12">
+    <div class="w-full max-w-sm">
+      <header class="px-2 sm:px-6">
+        <p class="text-sm">Log in</p>
+        <h1 class="mt-1 text-2xl font-bold tracking-tight">Gomashio Industries</h1>
+      </header>
+
+      <form id="login-form" class="mt-6 rounded-xl ring-1 ring-black/5 bg-white p-6 space-y-6">
+        <div>
+          <label class="block text-sm font-medium" for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            disabled
+            class="mt-1 block h-10 w-full rounded-md ring-1 ring-black/10 bg-white px-3"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium" for="auth-code">Authentication code</label>
+          <input
+            id="auth-code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="000000"
+            required
+            class="mt-1 block h-10 w-full rounded-md ring-1 ring-black/10 bg-white px-3 font-mono tracking-widest placeholder:text-seed/30 focus:ring-black/10 focus:outline-none"
+          />
+          <p id="login-error" class="mt-2 hidden text-sm text-red-600" role="alert">
+            Invalid code. Check your authenticator and try again.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          class="h-10 w-full rounded-md bg-seed text-sm font-bold text-warm transition-opacity hover:opacity-90"
+          >Log in</button
+        >
+      </form>
+
+      <p class="mt-8 text-center text-sm opacity-70">
+        This is a <a
+          href="/demo"
+          class="underline decoration-dashed decoration-seed/30 hover:decoration-seed transition"
+          >demo</a
+        > only.
+      </p>
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { getAccount } from "../../lib/demo-accounts";
+  import { base32Decode, verifyTOTP } from "../../lib/totp";
+
+  function init() {
+    const params = new URLSearchParams(window.location.search);
+    const accountId = params.get("account");
+
+    if (!accountId) {
+      window.location.href = "/demo";
+      return;
+    }
+
+    const account = getAccount(accountId);
+    if (!account) {
+      window.location.href = "/demo";
+      return;
+    }
+
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    emailInput.value = account.email;
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    const codeInput = document.getElementById("auth-code") as HTMLInputElement;
+    const error = document.getElementById("login-error")!;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      error.classList.add("hidden");
+
+      const code = codeInput.value.trim();
+      if (code.length !== 6) return;
+
+      const secret = base32Decode(account.secret);
+      const valid = await verifyTOTP(secret, code);
+
+      if (valid) {
+        window.location.href = `/demo/welcome?account=${account.id}`;
+      } else {
+        error.classList.remove("hidden");
+        codeInput.value = "";
+        codeInput.focus();
+      }
+    });
+  }
+
+  init();
+</script>

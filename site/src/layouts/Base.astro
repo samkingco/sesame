@@ -1,0 +1,59 @@
+---
+import { ClientRouter } from "astro:transitions";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "An unremarkably good 2FA app for iPhone. Fast, private, and open source with iCloud backups, Siri, and Spotlight.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f9eace" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={new URL("/og.png", Astro.site).href} />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site).href} />
+    <meta property="og:site_name" content="Sesame" />
+    <meta property="og:locale" content="en_GB" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL("/og.png", Astro.site).href} />
+
+    <link rel="icon" type="image/png" href="/favicon-64.png" sizes="64x64" />
+    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>{title}</title>
+    <ClientRouter />
+    <script is:inline>
+      if (!window.__introPlayed && location.pathname === "/" && !new URLSearchParams(location.search).has("skipintro")) {
+        document.documentElement.dataset.intro = "";
+        var s = document.createElement("style");
+        s.id = "intro-styles";
+        s.textContent = "[data-intro] .logo-container,[data-intro] .hero-line,[data-intro] #below-hero{opacity:0}";
+        document.head.appendChild(s);
+      }
+    </script>
+  </head>
+  <body class="flex min-h-full flex-col bg-warm text-seed font-sans text-base text-pretty antialiased">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  @import "../styles/global.css";
+</style>

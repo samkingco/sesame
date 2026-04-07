@@ -1,0 +1,67 @@
+---
+const questions = [
+  {
+    q: "Where are my codes stored?",
+    a: "On your device, and only your device. They never leave your phone unless you choose to back them up.\n\nUnder the hood: codes are stored in the iOS Keychain, hardware-encrypted by the Secure Enclave. Account metadata like names and issuers lives in local storage. Nothing touches a server.",
+  },
+  {
+    q: "Can I lock the app?",
+    a: "Yes. Sesame supports Face ID, Touch ID, and device passcode. You can set it to lock as soon as you leave the app, or after a delay.",
+  },
+  {
+    q: "What if I lose my phone?",
+    a: "If you\u2019ve enabled backups, you can restore everything to a new device. Sesame backs up to iCloud Drive or as a file you can store wherever you like, like an external drive or a cloud storage folder.",
+  },
+  {
+    q: "How safe are my backups?",
+    a: "Backups are encrypted with a password you choose before anything leaves your device. Without the password, the file is completely unreadable.\n\nFor the spec hunters: AES-256-GCM with Argon2id key derivation (3 iterations, 64 MB memory, 4 lanes). Your backup password is stored in the iOS Keychain and never leaves your device.",
+  },
+  {
+    q: "What about iCloud backups?",
+    a: "Everything is encrypted on your device before it reaches iCloud. What\u2019s stored on iCloud Drive is already unreadable without your password, with iCloud\u2019s own encryption on top.\n\nHeads up: if you use Sesame for your iCloud account\u2019s 2FA, make sure you have recovery codes saved somewhere safe. Without them, losing access to Sesame means losing access to iCloud.",
+  },
+  {
+    q: "How does AutoFill work?",
+    a: "Turn it on in Sesame settings and iOS will offer to fill in codes when you\u2019re logging into a website or app. You don\u2019t need to open Sesame.\n\nSesame registers your accounts with the iOS credential system, so codes appear inline wherever iOS supports AutoFill.",
+  },
+  {
+    q: "What can Siri do?",
+    a: "Ask Siri for a code by account name and it copies straight to your clipboard. You also get Spotlight search for your accounts and Shortcuts actions for automations.",
+  },
+];
+---
+
+<section class="mx-auto max-w-5xl px-6 py-24">
+  <div class="mx-auto max-w-xl">
+    <div class="divide-y divide-seed/10">
+      {
+        questions.map((item) => (
+          <details class="group">
+            <summary class="flex cursor-pointer list-none items-center justify-between py-5 text-lg font-semibold [&::-webkit-details-marker]:hidden">
+              {item.q}
+              <svg
+                class="ml-4 h-5 w-5 shrink-0 transition-transform group-open:rotate-45"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <line x1="10" y1="4" x2="10" y2="16" />
+                <line x1="4" y1="10" x2="16" y2="10" />
+              </svg>
+            </summary>
+            {item.a.split("\n\n").map((line, i) => {
+              const isLast = i === item.a.split("\n\n").length - 1;
+              return (
+                <p class={`${isLast ? "pb-5" : "pb-2"} text-base`}>
+                  {line}
+                  {!isLast && <br />}
+                </p>
+              );
+            })}
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

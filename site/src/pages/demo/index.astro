@@ -1,0 +1,79 @@
+---
+import Base from "../../layouts/Base.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+---
+
+<Base
+  title="Demo — Gomashio Industries"
+  description="Try Sesame's 2FA flow with a fake company called Gomashio Industries."
+>
+  <Header />
+  <main class="flex flex-1 flex-col items-center justify-center px-2 sm:px-6 py-12">
+    <div class="w-full max-w-sm">
+      <header class="px-2 sm:px-6">
+        <p class="text-sm">Employee portal</p>
+        <h1 class="mt-1 text-2xl font-bold tracking-tight">Gomashio Industries</h1>
+      </header>
+
+      <div class="mt-6 rounded-xl ring-1 ring-black/5 bg-white p-6">
+        <ul id="account-list" class="space-y-2"></ul>
+        <div id="no-accounts" class="hidden mb-4">
+          <p class="font-bold">No accounts yet</p>
+          <p class="text-sm">Make a new account to set up 2FA for Gomashio Industries.</p>
+        </div>
+
+        <a
+          href="/demo/setup"
+          id="new-account"
+          class="mt-4 flex h-10 w-full items-center justify-center rounded-md bg-seed text-sm font-medium text-warm transition-opacity hover:opacity-90"
+          >New account</a
+        >
+      </div>
+
+      <p class="mt-8 text-center text-sm opacity-70">
+        This is a <a
+          href="/demo"
+          class="underline decoration-dashed decoration-seed/30 hover:decoration-seed transition"
+          >demo</a
+        > only.
+      </p>
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { getAccounts } from "../../lib/demo-accounts";
+
+  function init() {
+    const accounts = getAccounts();
+    const list = document.getElementById("account-list")!;
+    const empty = document.getElementById("no-accounts")!;
+    const newBtn = document.getElementById("new-account")!;
+
+    if (accounts.length === 0) {
+      empty.classList.remove("hidden");
+      list.classList.add("hidden");
+      newBtn.classList.remove("mt-4");
+    } else {
+      empty.classList.add("hidden");
+      list.classList.remove("hidden");
+      list.innerHTML = accounts
+        .map(
+          (a) => `
+        <li>
+          <a href="/demo/login?account=${a.id}"
+             class="block rounded-md ring-1 ring-black/10 px-4 py-3 transition-colors hover:bg-black/[0.02]">
+            <span class="font-medium">${a.name}</span>
+            <span class="block text-sm">${a.email}</span>
+          </a>
+        </li>`,
+        )
+        .join("");
+    }
+  }
+
+  // Re-render on back navigation so account list stays fresh
+  document.addEventListener("astro:page-load", init);
+</script>

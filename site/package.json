@@ -1,0 +1,24 @@
+{
+  "name": "sesame-site",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "astro build && wrangler pages deploy dist"
+  },
+  "overrides": {
+    "vite": "^7"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.3",
+    "motion": "^12.38.0",
+    "qrcode-generator": "2.0.4",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "wrangler": "^4.80.0"
+  }
+}

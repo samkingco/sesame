@@ -1,0 +1,19 @@
+---
+import Logo from "./Logo.astro";
+import { APP_STORE_URL } from "../config";
+---
+
+<section class="flex flex-col items-center justify-center px-6 pt-5 pb-20 md:pt-[6vw] md:pb-[8vw]">
+  <Logo />
+  <h1 class="hero-line mt-6 text-center text-5xl font-bold md:text-6xl">Sesame</h1>
+  <h2 class="hero-line mt-4 text-center text-3xl font-bold text-balance max-w-lg md:text-4xl">
+    An unremarkably good 2FA app for iPhone.
+  </h2>
+  <a
+    href={APP_STORE_URL}
+    class="hero-line mt-10 inline-block transition-opacity hover:opacity-80"
+    aria-label="Download on the App Store"
+  >
+    <img src="/app-store-badge.svg" alt="Download on the App Store" class="h-11 w-auto" />
+  </a>
+</section>
