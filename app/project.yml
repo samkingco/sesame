@@ -80,8 +80,8 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_STYLE: Automatic
         INFOPLIST_KEY_UILaunchScreen_Generation: true
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: "2"
         SWIFT_EMIT_LOC_STRINGS: true
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
         INFOPLIST_KEY_NSCameraUsageDescription: "Sesame uses the camera to scan QR codes for adding 2FA accounts."
@@ -111,8 +111,8 @@ targets:
         INFOPLIST_FILE: SesameWidgets/Info.plist
         CODE_SIGN_STYLE: Automatic
         PRODUCT_BUNDLE_IDENTIFIER: $(SESAME_APP_BUNDLE_ID).SesameWidgets
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: "2"
         INFOPLIST_KEY_CFBundleDisplayName: "Sesame Widgets"
   SesameAutoFill:
     type: app-extension
@@ -156,8 +156,8 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_STYLE: Automatic
         PRODUCT_BUNDLE_IDENTIFIER: $(SESAME_APP_BUNDLE_ID).SesameAutoFill
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: "2"
         INFOPLIST_KEY_CFBundleDisplayName: "Sesame AutoFill"
   CArgon2macOS:
     type: library.static
