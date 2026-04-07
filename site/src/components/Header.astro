@@ -1,5 +1,5 @@
 ---
-import { GITHUB_URL } from "../config";
+import { APP_STORE_URL, GITHUB_URL } from "../config";
 ---
 
 <header
@@ -44,7 +44,7 @@ import { GITHUB_URL } from "../config";
 
     <div class="flex items-center gap-5">
       <a
-        href="#download"
+        href={APP_STORE_URL}
         class="block text-sm font-medium text-warm bg-seed px-3 py-1.5 rounded-md transition-opacity hover:opacity-90"
       >
         Download

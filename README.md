@@ -4,7 +4,7 @@ An unremarkably good 2FA app for iPhone.
 
 Get the app:
 - [Website](https://opensesame.software)
-- App Store coming shortly
+- [App Store](https://apps.apple.com/us/app/sesame-2fa-authenticator/id6761735240)
 
 ## Why Sesame?
 

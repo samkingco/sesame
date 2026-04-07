@@ -5,6 +5,7 @@ DEVICES=(
     "iPhone 17 Pro Max"   # 6.9" (1320x2868) — mandatory for App Store
     "iPhone 17 Pro"       # 6.3" (1206x2622) — optional, distinct size class
     "iPhone 16e"          # 6.1" (1170x2532) — optional, smallest supported
+    "iPad Pro 13-inch (M5)" # 13" (2064x2752) — mandatory for App Store iPad
 )
 
 SCHEME="SesameScreenshots"

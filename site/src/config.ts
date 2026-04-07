@@ -1,2 +1,2 @@
 export const GITHUB_URL = "https://github.com/samkingco/sesame";
-export const APP_STORE_URL = "#"; // TODO: replace with real App Store URL
+export const APP_STORE_URL = "https://apps.apple.com/us/app/sesame-2fa-authenticator/id6761735240";
