@@ -171,9 +171,9 @@ If no key found, tell the user:
 ```
 No App Store Connect API key found. To set up:
 1. Go to App Store Connect → Users and Access → Integrations → App Store Connect API
-2. Generate a new key (Admin role)
+2. Generate a new key with Admin role (required for cloud signing)
 3. Save the .p8 file to ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
-4. Note your Key ID and Issuer ID
+4. Store your Issuer ID in ~/.appstoreconnect/issuer_id
 
 Then re-run /release — it will pick up the key automatically.
 ```
@@ -193,7 +193,11 @@ xcodebuild archive \
 
 If archive fails, stop and report. Do not proceed.
 
-### Export IPA
+### Export and Upload
+
+Read the Key ID from the `.p8` filename (`AuthKey_<KEY_ID>.p8`).
+Read the Issuer ID from `~/.appstoreconnect/issuer_id`. If the file doesn't exist, ask the user for it.
+Read the Team ID from `app/Development.xcconfig` (`DEVELOPMENT_TEAM` value).
 
 Create `build/ExportOptions.plist` with:
 
@@ -203,9 +207,13 @@ Create `build/ExportOptions.plist` with:
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>app-store</string>
+    <string>app-store-connect</string>
     <key>destination</key>
     <string>upload</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>teamID</key>
+    <string>TEAM_ID_HERE</string>
 </dict>
 </plist>
 ```
@@ -215,21 +223,14 @@ xcodebuild -exportArchive \
   -archivePath build/Sesame.xcarchive \
   -exportOptionsPlist build/ExportOptions.plist \
   -exportPath build/export \
+  -allowProvisioningUpdates \
+  -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 \
+  -authenticationKeyID <KEY_ID> \
+  -authenticationKeyIssuerID <ISSUER_ID> \
   2>&1
 ```
 
-### Upload
-
-Read the API key ID from the filename (`AuthKey_<KEY_ID>.p8`) and ask the user for their Issuer ID if not previously stored.
-
-```bash
-xcrun altool --upload-app \
-  --type ios \
-  --file build/export/Sesame.ipa \
-  --apiKey <KEY_ID> \
-  --apiIssuer <ISSUER_ID> \
-  2>&1
-```
+This handles cloud signing, export, and upload in a single step.
 
 Report success or failure. If successful, note that the build will appear in App Store Connect / TestFlight after processing.
 
