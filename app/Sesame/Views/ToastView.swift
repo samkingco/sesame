@@ -1,20 +1,10 @@
 import SwiftUI
 
-struct CopyToastView: View {
-    let state: CopyToastState
+struct ToastView: View {
+    let state: ToastState
     let onDismiss: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var message: String {
-        guard let duration = state.clearDuration else { return "Copied" }
-        return switch duration {
-        case .never: "Copied"
-        case .thirtySeconds: "Copied for 30s"
-        case .oneMinute: "Copied for 1m"
-        case .fiveMinutes: "Copied for 5m"
-        }
-    }
 
     var body: some View {
         VStack {
@@ -35,7 +25,7 @@ struct CopyToastView: View {
             HapticService.isEnabled
         }
         .onChange(of: state.showCount) {
-            AccessibilityNotification.Announcement(message).post()
+            AccessibilityNotification.Announcement(state.message).post()
         }
     }
 
@@ -43,7 +33,7 @@ struct CopyToastView: View {
         Button(action: onDismiss) {
             HStack(spacing: 4) {
                 Image(systemName: "checkmark.circle.fill")
-                Text(message)
+                Text(state.message)
             }
             .font(.subheadline)
             .bold()
@@ -54,6 +44,6 @@ struct CopyToastView: View {
             .background(.green, in: .capsule)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(message)
+        .accessibilityLabel(state.message)
     }
 }

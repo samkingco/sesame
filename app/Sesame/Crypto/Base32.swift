@@ -4,6 +4,32 @@
 import Foundation
 
 enum Base32 {
+    static func encode(_ data: Data) -> String {
+        guard !data.isEmpty else { return "" }
+
+        let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
+        var result = ""
+        result.reserveCapacity((data.count * 8 + 4) / 5)
+
+        var bits = 0
+        var accumulator: UInt32 = 0
+
+        for byte in data {
+            accumulator = (accumulator << 8) | UInt32(byte)
+            bits += 8
+            while bits >= 5 {
+                bits -= 5
+                result.append(alphabet[Int((accumulator >> bits) & 0x1F)])
+            }
+        }
+
+        if bits > 0 {
+            result.append(alphabet[Int((accumulator << (5 - bits)) & 0x1F)])
+        }
+
+        return result
+    }
+
     static func decode(_ input: String) -> Data? {
         let stripped = input
             .uppercased()

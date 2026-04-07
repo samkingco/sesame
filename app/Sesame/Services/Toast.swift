@@ -3,9 +3,9 @@ import SwiftUI
 // MARK: - State
 
 @MainActor @Observable
-final class CopyToastState {
+final class ToastState {
     var isVisible = false
-    var clearDuration: ClipboardService.ClearDuration?
+    var message = ""
     var showCount = 0
     var pillFrame: CGRect = .zero
 }
@@ -13,18 +13,16 @@ final class CopyToastState {
 // MARK: - Manager
 
 @MainActor
-enum CopyToast {
+enum Toast {
     private static var window: PassThroughWindow?
     private static let displayDuration: Double = 2
-    private static let state = CopyToastState()
+    private static let state = ToastState()
     private static var dismissTask: Task<Void, Never>?
 
-    static func show() {
+    static func show(_ message: String) {
         dismissTask?.cancel()
 
-        state.clearDuration = ClipboardService.ClearDuration(
-            rawValue: ClipboardService.clearDuration
-        )
+        state.message = message
 
         let isFirstShow = window == nil
         ensureWindow()
@@ -46,6 +44,26 @@ enum CopyToast {
         }
     }
 
+    /// Convenience for the copy action — builds the duration-aware message.
+    static func showCopied() {
+        let duration = ClipboardService.ClearDuration(
+            rawValue: ClipboardService.clearDuration
+        )
+
+        let message = if let duration {
+            switch duration {
+            case .never: "Copied"
+            case .thirtySeconds: "Copied for 30s"
+            case .oneMinute: "Copied for 1m"
+            case .fiveMinutes: "Copied for 5m"
+            }
+        } else {
+            "Copied"
+        }
+
+        show(message)
+    }
+
     static func dismiss() {
         dismissTask?.cancel()
         dismissTask = nil
@@ -62,7 +80,7 @@ enum CopyToast {
             ?? scenes.first
         else { return }
 
-        let toastView = CopyToastView(state: state) {
+        let toastView = ToastView(state: state) {
             dismiss()
         }
         let hosting = UIHostingController(rootView: toastView)
@@ -84,7 +102,7 @@ enum CopyToast {
 
 /// UIWindow that only intercepts touches within the toast pill's frame.
 private final class PassThroughWindow: UIWindow {
-    var toastState: CopyToastState?
+    var toastState: ToastState?
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         guard let toastState, toastState.isVisible,

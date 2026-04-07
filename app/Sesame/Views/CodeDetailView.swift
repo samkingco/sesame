@@ -147,6 +147,6 @@ struct CodeDetailView: View {
         guard !rawCode.isEmpty else { return }
         codeService.copyCode(for: account.id)
         codeService.startLiveActivity(for: account)
-        CopyToast.show()
+        Toast.showCopied()
     }
 }
