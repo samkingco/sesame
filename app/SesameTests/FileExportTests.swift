@@ -88,7 +88,7 @@ struct FileExportTests {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let expectedDate = formatter.string(from: .now)
-        let expectedFilename = "sesame-backup-\(expectedDate).sesame"
+        let expectedFilename = "\(expectedDate).backup.sesame"
 
         #expect(url.lastPathComponent == expectedFilename)
         #expect(url.pathExtension == "sesame")

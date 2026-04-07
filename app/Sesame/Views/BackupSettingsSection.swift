@@ -6,9 +6,9 @@ struct BackupSettingsSection: View {
     var body: some View {
         Section("Backup") {
             #if ICLOUD_CAPABLE
-                if ICloudBackupAdapter.isAvailable {
+                if ICloudBackupAdapter.isAvailable, let adapter = backupStore.adapter(for: "icloud") {
                     NavigationLink("iCloud Backup") {
-                        ICloudBackupView(adapter: ICloudBackupAdapter())
+                        ICloudBackupView(adapter: adapter)
                     }
                     .sesameRowBackground()
                 }

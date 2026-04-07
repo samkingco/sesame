@@ -88,4 +88,13 @@ enum RecipeHelper {
         settingsButton.tap()
         usleep(500_000)
     }
+
+    static func openRestoreBackup(app: XCUIApplication) {
+        openSettings(app: app)
+        let restoreButton = app.buttons["Restore Backup"]
+        XCTAssertTrue(restoreButton.waitForExistence(timeout: 3))
+        restoreButton.tap()
+        usleep(500_000)
+    }
+
 }

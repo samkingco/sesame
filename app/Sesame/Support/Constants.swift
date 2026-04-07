@@ -11,6 +11,7 @@ enum UserDefaultsKey {
     static let backupAutoBackupEnabledPrefix = "backupAutoBackupEnabled."
     static let backupRecoveryKeyWarningShown = "backupRecoveryKeyWarningShown"
     static let lastBackupPrefix = "lastBackup."
+    static let backupFilenamePrefix = "backupFilename."
     static let liveActivityEnabled = "liveActivityEnabled"
 }
 
