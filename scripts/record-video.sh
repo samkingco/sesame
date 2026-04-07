@@ -5,7 +5,8 @@ DEVICES=("iPhone 17 Pro")
 SCHEME="SesameScreenshots"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$PROJECT_DIR/app/videos"
+OUTPUT_DIR="$PROJECT_DIR/media/marketing"
+CONTROL_DIR="$PROJECT_DIR/media/.control"
 
 FILTER_DEVICE=""
 FILTER_FLOW=""
@@ -46,10 +47,12 @@ for device in "${DEVICES[@]}"; do
         FLOW_NAME="${flow_pair##*:}"
         RAW="$OUTPUT_DIR/.raw.mov"
         FINAL="$OUTPUT_DIR/${device}-${FLOW_NAME}.mov"
-        TIMING="$OUTPUT_DIR/.timing"
-        RECORD_START_FILE="$OUTPUT_DIR/.record-start"
+        TIMING="$CONTROL_DIR/.timing"
+        RECORD_START_FILE="$CONTROL_DIR/.record-start"
 
         echo "--- $TEST_METHOD ---"
+
+        mkdir -p "$CONTROL_DIR"
 
         # Start recording, capture timestamp when active
         READY="$OUTPUT_DIR/.ready"
@@ -139,7 +142,7 @@ for device in "${DEVICES[@]}"; do
         echo "  trimmed: $FINAL (${ACTUAL_DURATION}s)"
         echo "  downscaled: $DOWNSCALED"
 
-        rm -f "$TIMING" "$RECORD_START_FILE" "$OUTPUT_DIR/.video-date"
+        rm -f "$TIMING" "$RECORD_START_FILE" "$CONTROL_DIR/.video-date"
     done
 
     xcrun simctl status_bar "$device" clear

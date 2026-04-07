@@ -26,8 +26,9 @@ import Foundation
             let projectRoot = URL(fileURLWithPath: #filePath)
                 .deletingLastPathComponent() // Support/
                 .deletingLastPathComponent() // Sesame/
-                .deletingLastPathComponent() // project root
-            controlFile = projectRoot.appendingPathComponent("videos/.video-date")
+                .deletingLastPathComponent() // app/
+                .deletingLastPathComponent() // repo root
+            controlFile = projectRoot.appendingPathComponent("media/.control/.video-date")
         }
 
         var currentDate: Date {

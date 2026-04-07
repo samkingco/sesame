@@ -16,10 +16,11 @@ func saveScreenshot(_ name: String) {
     default: screenSize = "\(pixelHeight)"
     }
 
-    let projectDir = URL(fileURLWithPath: #filePath)
+    let repoRoot = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent() // SesameScreenshots/
-        .deletingLastPathComponent() // project root
-    let outputDir = projectDir.appendingPathComponent("screenshots")
+        .deletingLastPathComponent() // app/
+        .deletingLastPathComponent() // repo root
+    let outputDir = repoRoot.appendingPathComponent("media/appstore")
 
     try! FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
 

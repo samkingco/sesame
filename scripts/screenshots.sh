@@ -11,7 +11,7 @@ DEVICES=(
 SCHEME="SesameScreenshots"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$PROJECT_DIR/app/screenshots"
+OUTPUT_DIR="$PROJECT_DIR/media/appstore"
 
 # Clean previous screenshots
 rm -rf "$OUTPUT_DIR"
@@ -54,4 +54,4 @@ echo ""
 echo "=== Screenshots ==="
 ls -1 "$OUTPUT_DIR"
 echo ""
-echo "Done. $(ls -1 "$OUTPUT_DIR" | wc -l | tr -d ' ') screenshots in screenshots/"
+echo "Done. $(ls -1 "$OUTPUT_DIR" | wc -l | tr -d ' ') screenshots in media/appstore/"

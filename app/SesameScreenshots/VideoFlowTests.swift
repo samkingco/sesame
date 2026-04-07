@@ -6,11 +6,13 @@ final class VideoFlowTests: XCTestCase {
     private var recordStart: TimeInterval = 0
 
     private static let projectRoot = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-    private static let controlFile = projectRoot.appendingPathComponent("videos/.video-date")
-    private static let timingFile = projectRoot.appendingPathComponent("videos/.timing")
-    private static let recordStartFile = projectRoot.appendingPathComponent("videos/.record-start")
+        .deletingLastPathComponent() // SesameScreenshots/
+        .deletingLastPathComponent() // app/
+        .deletingLastPathComponent() // repo root
+    private static let controlDir = projectRoot.appendingPathComponent("media/.control")
+    private static let controlFile = controlDir.appendingPathComponent(".video-date")
+    private static let timingFile = controlDir.appendingPathComponent(".timing")
+    private static let recordStartFile = controlDir.appendingPathComponent(".record-start")
 
     override func setUpWithError() throws {
         continueAfterFailure = false
