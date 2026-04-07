@@ -4,8 +4,11 @@ import SwiftUI
 
 class CredentialProviderViewController: ASCredentialProviderViewController {
     private let appBundleId = Bundle.main.infoDictionary?["AppBundleID"] as! String
-    private var keychainService: String { "\(appBundleId).secrets" }
-    // AppIdentifierPrefix is injected into Info.plist by Xcode at build time as "<TeamID>."
+    private var keychainService: String {
+        "\(appBundleId).secrets"
+    }
+
+    /// AppIdentifierPrefix is injected into Info.plist by Xcode at build time as "<TeamID>."
     private var keychainAccessGroup: String {
         let prefix = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String ?? ""
         return "\(prefix)\(appBundleId)"

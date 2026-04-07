@@ -13,7 +13,7 @@ private let headerLength = magicBytes.count + 1 + saltLength + nonceLength // 35
 private let tagLength = 16
 
 private let argon2Iterations: UInt32 = 3
-private let argon2Memory: UInt32 = 65_536 // 64 MB in KiB
+private let argon2Memory: UInt32 = 65536 // 64 MB in KiB
 private let argon2Parallelism: UInt32 = 4
 
 // MARK: - Key Derivation
@@ -57,7 +57,7 @@ private func decrypt(blob: Data, password: String) -> Data {
     var offset = 0
 
     // Verify magic bytes
-    let magic = Array(blob[offset..<offset + magicBytes.count])
+    let magic = Array(blob[offset ..< offset + magicBytes.count])
     guard magic == magicBytes else {
         fputs("Error: not a .sesame backup file (invalid magic bytes)\n", stderr)
         exit(1)
@@ -73,15 +73,15 @@ private func decrypt(blob: Data, password: String) -> Data {
     offset += 1
 
     // Extract salt, nonce, ciphertext, tag
-    let salt = Array(blob[offset..<offset + saltLength])
+    let salt = Array(blob[offset ..< offset + saltLength])
     offset += saltLength
 
-    let nonceBytes = blob[offset..<offset + nonceLength]
+    let nonceBytes = blob[offset ..< offset + nonceLength]
     offset += nonceLength
 
     let ciphertextEnd = blob.count - tagLength
-    let ciphertext = blob[offset..<ciphertextEnd]
-    let tag = blob[ciphertextEnd..<blob.count]
+    let ciphertext = blob[offset ..< ciphertextEnd]
+    let tag = blob[ciphertextEnd ..< blob.count]
 
     // Derive key and decrypt
     let key = deriveKey(password: password, salt: salt)

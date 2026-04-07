@@ -98,13 +98,14 @@ final class VideoFlowTests: XCTestCase {
 
     private func readRecordStart() -> TimeInterval {
         // Poll briefly — the shell writes this file right after recording starts
-        for _ in 0..<100 {
+        for _ in 0 ..< 100 {
             if let data = try? Data(contentsOf: Self.recordStartFile),
                let str = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-               let ts = Double(str) {
+               let ts = Double(str)
+            {
                 return ts
             }
-            usleep(50_000)
+            usleep(50000)
         }
         // Fallback: use current time (offsets will be ~0-based)
         return Date().timeIntervalSince1970

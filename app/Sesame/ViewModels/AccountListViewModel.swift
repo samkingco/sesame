@@ -76,11 +76,10 @@ extension [Account] {
             guard issuerRange != nil || nameRange != nil else { return nil }
 
             // Issuer prefix > issuer contains > name prefix > name contains
-            let score: Int
-            if issuerRange?.lowerBound == issuer.startIndex { score = 4 }
-            else if issuerRange != nil { score = 3 }
-            else if nameRange?.lowerBound == name.startIndex { score = 2 }
-            else { score = 1 }
+            let score = if issuerRange?.lowerBound == issuer.startIndex { 4 }
+            else if issuerRange != nil { 3 }
+            else if nameRange?.lowerBound == name.startIndex { 2 }
+            else { 1 }
 
             let hit = SearchHit(
                 account: account,

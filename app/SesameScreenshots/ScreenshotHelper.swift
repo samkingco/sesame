@@ -8,12 +8,11 @@ func saveScreenshot(_ name: String) {
     let pixelHeight = Int(image.size.height * image.scale)
 
     // Map pixel height to Apple's marketing screen size
-    let screenSize: String
-    switch pixelHeight {
-    case 2868: screenSize = "6.9"
-    case 2622: screenSize = "6.3"
-    case 2532: screenSize = "6.1"
-    default: screenSize = "\(pixelHeight)"
+    let screenSize = switch pixelHeight {
+    case 2868: "6.9"
+    case 2622: "6.3"
+    case 2532: "6.1"
+    default: "\(pixelHeight)"
     }
 
     let repoRoot = URL(fileURLWithPath: #filePath)

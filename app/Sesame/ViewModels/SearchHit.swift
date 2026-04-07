@@ -1,7 +1,10 @@
 import Foundation
 
 struct SearchHit: Identifiable {
-    var id: UUID { account.id }
+    var id: UUID {
+        account.id
+    }
+
     let account: Account
     let issuerHighlight: Highlight?
     let nameHighlight: Highlight?
