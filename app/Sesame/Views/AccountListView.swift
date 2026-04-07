@@ -184,7 +184,7 @@ struct AccountListView: View {
     private func copyCode(for account: Account) {
         codeService.copyCode(for: account.id)
         codeService.startLiveActivity(for: account)
-        CopyToast.show()
+        Toast.showCopied()
     }
 
     private func deleteAccount(_ account: Account) {

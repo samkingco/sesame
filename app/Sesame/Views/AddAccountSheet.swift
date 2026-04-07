@@ -37,6 +37,12 @@ struct AddAccountSheet: View {
                         )
                     case let .saved(account):
                         CodeDetailView(account: account, onDone: { dismiss() })
+                    case let .importReview(accounts):
+                        ImportReviewView(
+                            accounts: accounts,
+                            initialProfileId: profileId,
+                            onDone: { dismiss() }
+                        )
                     }
                 }
         }
@@ -88,17 +94,40 @@ struct AddAccountSheet: View {
     // MARK: - Actions
 
     private func handleScan(_ input: String) {
+        if input.lowercased().hasPrefix("otpauth-migration://") {
+            handleMigrationScan(input)
+            return
+        }
+
         do {
             let parsed = try OTPAuthParser.parse(input)
             parseError = nil
             path.append(AddAccountPath.confirmation(parsed))
         } catch {
-            parseError = error.localizedDescription
-            Task {
-                try? await Task.sleep(for: .seconds(2))
-                parseError = nil
-                scanResetTrigger += 1
+            showScanError(error.localizedDescription)
+        }
+    }
+
+    private func handleMigrationScan(_ input: String) {
+        do {
+            let accounts = try GoogleAuthMigrationParser.parse(input)
+            guard !accounts.isEmpty else {
+                showScanError("No accounts found in QR code")
+                return
             }
+            parseError = nil
+            path.append(AddAccountPath.importReview(accounts))
+        } catch {
+            showScanError(error.localizedDescription)
+        }
+    }
+
+    private func showScanError(_ message: String) {
+        parseError = message
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            parseError = nil
+            scanResetTrigger += 1
         }
     }
 

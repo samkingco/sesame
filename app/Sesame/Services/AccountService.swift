@@ -72,6 +72,23 @@ enum AccountService {
         return try modelContext.fetch(descriptor)
     }
 
+    /// Given a set of candidate secrets, returns the subset that already exist in the keychain.
+    static func findDuplicateSecrets(
+        candidates: Set<String>,
+        keychain: KeychainServiceProtocol,
+        modelContext: ModelContext
+    ) throws -> Set<String> {
+        let accounts = try fetchActive(modelContext: modelContext)
+        var duplicates = Set<String>()
+        for account in accounts {
+            guard let secret = try? keychain.read(for: account.id) else { continue }
+            if candidates.contains(secret) {
+                duplicates.insert(secret)
+            }
+        }
+        return duplicates
+    }
+
     // MARK: - Private
 
     private static func afterMutation(backupStore: BackupStore) {
