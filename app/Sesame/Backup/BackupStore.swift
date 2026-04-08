@@ -135,10 +135,13 @@ final class BackupStore {
         debounceTask = nil
 
         do {
-            try await adapter.deleteBackup()
-            logger.info("Backup file deleted for \(adapter.adapterKey)")
+            let files = try adapter.listBackups()
+            for file in files {
+                try await adapter.deleteBackup(id: file.id)
+            }
+            logger.info("Deleted \(files.count) backup file(s) for \(adapter.adapterKey)")
         } catch {
-            logger.error("Failed to delete backup for \(adapter.adapterKey): \(error.localizedDescription)")
+            logger.error("Failed to delete backups for \(adapter.adapterKey): \(error.localizedDescription)")
         }
 
         try? backupService.clearBackupPassword(for: adapter.adapterKey)

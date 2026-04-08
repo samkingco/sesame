@@ -3,23 +3,68 @@
 
     struct ICloudBackupView: View {
         @Environment(BackupStore.self) private var backupStore
-        @Environment(\.profileTint) private var profileTint
 
         let adapter: BackupAdapter
 
         @State private var showPasswordSetup = false
         @State private var showRecoveryKeyWarning = false
         @State private var showRemoveConfirmation = false
+        @State private var showChangePassword = false
+        @State private var backupRefreshID = 0
 
         var body: some View {
             Group {
                 if backupStore.isConfigured(for: adapter) {
                     Form {
-                        enabledContent
+                        Section {
+                            Toggle("Back Up Automatically", isOn: autoBackupToggle)
+                                .sesameRowBackground()
+
+                            Button("Back Up Now", action: backUpNow)
+                                .disabled(backupStore.isBackingUp)
+                                .sesameRowBackground()
+                        } footer: {
+                            if let error = backupStore.lastError {
+                                Text(error)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+
+                        ICloudBackupFilesSection(adapter: adapter, refreshID: backupRefreshID)
+
+                        Section {
+                            Button("Change Password") {
+                                showChangePassword = true
+                            }
+                            .sesameRowBackground()
+                        }
+
+                        Section {
+                            Button("Remove iCloud Backup", role: .destructive) {
+                                showRemoveConfirmation = true
+                            }
+                            .sesameRowBackground()
+                        } footer: {
+                            Text(
+                                // swiftlint:disable:next line_length
+                                "Removes all backup data from iCloud Drive, including backups from other devices, and your backup password from this device. You can set up iCloud backup again at any time."
+                            )
+                        }
+                        .alert("Remove iCloud Backup?", isPresented: $showRemoveConfirmation) {
+                            Button("Remove", role: .destructive) {
+                                Task { await backupStore.removeBackup(for: adapter) }
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text(
+                                // swiftlint:disable:next line_length
+                                "This will remove all iCloud backups, including those from other devices. Your accounts on this device are not affected."
+                            )
+                        }
                     }
                     .sesameSheetContent()
                 } else {
-                    disabledContent
+                    ICloudBackupDisabledView(onSetup: handleSetup)
                 }
             }
             .navigationTitle("iCloud Backup")
@@ -30,6 +75,9 @@
                     Task { await backupStore.backup(using: adapter) }
                     showPasswordSetup = false
                 }
+            }
+            .navigationDestination(isPresented: $showChangePassword) {
+                ICloudChangePasswordView(adapter: adapter)
             }
             .alert("Do you use Sesame for your Apple ID?", isPresented: $showRecoveryKeyWarning) {
                 Button("Set Up Recovery Key") {
@@ -50,79 +98,6 @@
             }
         }
 
-        private var disabledContent: some View {
-            ContentUnavailableView {
-                Label("iCloud Backup", systemImage: "icloud")
-            } description: {
-                Text(
-                    // swiftlint:disable:next line_length
-                    "Encrypt and back up your accounts to iCloud Drive. If you use Sesame for your Apple ID, save your backup codes separately in case you lose access to your device."
-                )
-            } actions: {
-                Button("Set Up iCloud Backup") {
-                    if backupStore.recoveryKeyWarningShown {
-                        showPasswordSetup = true
-                    } else {
-                        showRecoveryKeyWarning = true
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(profileTint)
-            }
-            .geometryGroup()
-            .safeAreaPadding(.bottom, 20)
-            .sesameSheetContent()
-        }
-
-        @MainActor @ViewBuilder
-        private var enabledContent: some View {
-            Section {
-                Toggle("Back Up Automatically", isOn: autoBackupToggle)
-                    .sesameRowBackground()
-
-                Button("Back Up Now", action: backUpNow)
-                    .disabled(backupStore.isBackingUp)
-                    .sesameRowBackground()
-            } footer: {
-                if let error = backupStore.lastError {
-                    Text(error)
-                        .foregroundStyle(.red)
-                } else if let date = backupStore.lastDeviceBackupDate(for: adapter) {
-                    Text("Last backup \(date, format: .relative(presentation: .named))")
-                } else {
-                    Text("Not backed up yet")
-                }
-            }
-
-            Section {
-                NavigationLink("Change Password") {
-                    ICloudChangePasswordView(adapter: adapter)
-                }
-                .sesameRowBackground()
-            }
-
-            Section {
-                Button("Remove iCloud Backup", role: .destructive) {
-                    showRemoveConfirmation = true
-                }
-                .sesameRowBackground()
-            } footer: {
-                Text(
-                    // swiftlint:disable:next line_length
-                    "Removes your backup data from iCloud Drive and your backup password from this device. You can set up iCloud backup again at any time."
-                )
-            }
-            .alert("Remove iCloud Backup?", isPresented: $showRemoveConfirmation) {
-                Button("Remove", role: .destructive) {
-                    Task { await backupStore.removeBackup(for: adapter) }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Your accounts on this device are not affected.")
-            }
-        }
-
         private var autoBackupToggle: Binding<Bool> {
             Binding(
                 get: { backupStore.isAutoBackupEnabled(for: adapter) },
@@ -130,8 +105,19 @@
             )
         }
 
+        private func handleSetup() {
+            if backupStore.recoveryKeyWarningShown {
+                showPasswordSetup = true
+            } else {
+                showRecoveryKeyWarning = true
+            }
+        }
+
         private func backUpNow() {
-            Task { await backupStore.backup(using: adapter) }
+            Task {
+                await backupStore.backup(using: adapter)
+                backupRefreshID += 1
+            }
         }
     }
 #endif

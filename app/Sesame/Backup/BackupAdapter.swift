@@ -19,8 +19,8 @@ protocol BackupAdapter: Sendable {
     /// Check if a backup exists and when it was last modified
     func lastDestinationBackupDate() async throws -> Date?
 
-    /// Delete the backup from the destination
-    func deleteBackup() async throws
+    /// Delete a specific backup by its identifier
+    func deleteBackup(id: String) async throws
 
     /// List all backup files at the destination
     func listBackups() throws -> [BackupFile]
