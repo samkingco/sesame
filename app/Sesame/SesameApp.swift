@@ -43,13 +43,8 @@ struct SesameApp: App {
             keychain: keychain,
             modelContext: modelContainer.mainContext
         )
-        var backupAdapters: [BackupAdapter] = []
-        #if ICLOUD_CAPABLE
-            backupAdapters.append(ICloudBackupAdapter())
-        #endif
         _backupStore = State(initialValue: BackupStore(
-            backupService: backupService,
-            adapters: backupAdapters
+            backupService: backupService
         ))
 
         PrivacyWindowService.start()
@@ -73,6 +68,9 @@ struct SesameApp: App {
             #endif
                 .task {
                     purgeOnLaunch()
+                    #if ICLOUD_CAPABLE
+                        await backupStore.resolveICloudAdapter()
+                    #endif
                     #if AUTOFILL_CAPABLE
                         if AutoFillService.isEnabled {
                             await AutoFillService.syncIdentityStore()

@@ -239,7 +239,9 @@ private final class MockAdapter: BackupAdapter {
         storedDate = nil
     }
 
-    func listBackups() throws -> [BackupFile] { [] }
+    func listBackups() throws -> [BackupFile] {
+        []
+    }
 }
 
 private enum MockAdapterError: Error {
