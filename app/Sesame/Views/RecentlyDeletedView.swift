@@ -135,8 +135,7 @@ private struct RecentlyDeletedRow: View {
                 .tint(.green)
         }
         .swipeActions(edge: .trailing) {
-            Button("Delete", action: onDelete)
-                .tint(.red)
+            Button("Delete", role: .destructive, action: onDelete)
         }
         .contextMenu {
             Button("Restore", systemImage: "arrow.uturn.backward", action: onRestore)
