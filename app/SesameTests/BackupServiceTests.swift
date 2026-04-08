@@ -234,7 +234,7 @@ private final class MockAdapter: BackupAdapter {
         storedDate
     }
 
-    func deleteBackup() async throws {
+    func deleteBackup(id _: String) async throws {
         storedBlob = nil
         storedDate = nil
     }

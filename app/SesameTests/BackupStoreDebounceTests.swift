@@ -66,7 +66,7 @@
             nil
         }
 
-        func deleteBackup() async throws {}
+        func deleteBackup(id _: String) async throws {}
         func listBackups() throws -> [BackupFile] {
             []
         }

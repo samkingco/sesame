@@ -103,8 +103,11 @@
             return attributes[.modificationDate] as? Date
         }
 
-        func deleteBackup() async throws {
-            let fileURL = try backupFileURL()
+        func deleteBackup(id: String) async throws {
+            guard let dir = documentsDirectory else {
+                throw ICloudBackupError.iCloudUnavailable
+            }
+            let fileURL = dir.appending(path: id)
 
             var coordinatorError: NSError?
             var deleteError: Error?
