@@ -7,7 +7,7 @@ final class BackupStore {
     private(set) var isBackingUp = false
     private(set) var lastError: String?
 
-    private let adapters: [BackupAdapter]
+    private var adapters: [BackupAdapter]
     private let defaults: UserDefaults
     private var debounceTask: Task<Void, Never>?
     private let logger = Logger(
@@ -38,6 +38,29 @@ final class BackupStore {
     func adapter(for key: String) -> BackupAdapter? {
         adapters.first { $0.adapterKey == key }
     }
+
+    #if ICLOUD_CAPABLE
+        func resolveICloudAdapter() async {
+            guard adapter(for: "icloud") == nil else { return }
+
+            var containerURL = await ICloudBackupAdapter.resolveContainerURL()
+
+            #if DEMO_ENABLED
+                if containerURL == nil, LaunchMode.isDemoData {
+                    containerURL = FileManager.default.temporaryDirectory
+                        .appending(path: "icloud-demo")
+                }
+            #endif
+
+            guard let containerURL else {
+                logger.info("iCloud container unavailable")
+                return
+            }
+
+            adapters.append(ICloudBackupAdapter(containerURL: containerURL))
+            logger.info("iCloud adapter resolved")
+        }
+    #endif
 
     // MARK: - Per-adapter state
 
@@ -80,7 +103,7 @@ final class BackupStore {
             defaults.set(filename, forKey: key)
         }
     #else
-        private func ensureBackupFilename(for adapter: BackupAdapter) {}
+        private func ensureBackupFilename(for _: BackupAdapter) {}
     #endif
 
     // MARK: - Backup
