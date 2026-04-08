@@ -18,6 +18,14 @@ struct AccountRowButton: View {
     var body: some View {
         rowContent
             .foregroundStyle(.primary)
+            .swipeActions(edge: .trailing) {
+                Button("Delete", action: onDelete)
+                    .tint(.red)
+            }
+            .swipeActions(edge: .leading) {
+                Button("Edit", action: onEdit)
+                    .tint(profileTint)
+            }
             .contextMenu {
                 Button(action: onViewLarger) {
                     Label("View Larger", systemImage: "rectangle.expand.diagonal")
