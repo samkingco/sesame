@@ -43,48 +43,64 @@ xcodebuild -project app/Sesame.xcodeproj -scheme Sesame -destination 'platform=i
 
 If either fails, stop and report. Do not proceed with a broken build.
 
-## Step 2: Determine Version and Build Number
+## Step 2: Determine Version, Build Number, and Release Notes
 
 Read from `app/project.yml` (under the Sesame target settings):
 - `MARKETING_VERSION` (e.g. `1.1.0`)
 - `CURRENT_PROJECT_VERSION` (e.g. `3`)
 
-**Build number always increments by 1.**
+**Build number always increments by 1.** Build numbers are monotonic — always increment from the current value, regardless of whether the marketing version bumps. This matches Signal-iOS conventions and gives you unambiguous build identifiers.
 
-**Marketing version** is decided as follows:
+### Marketing version suggestion
 
-1. Find the most recent shipped marketing version tag:
+The semver baseline is the most recent shipped marketing version tag:
 
-   ```bash
-   git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
-   ```
+```bash
+git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
+```
 
-2. Gather commits since that tag (or since the start of history if none):
+Gather commits since that tag:
 
-   ```bash
-   git log <last-shipped-tag>..HEAD --oneline --no-decorate
-   ```
+```bash
+git log <last-shipped-tag>..HEAD --oneline --no-decorate
+```
 
-3. Suggest a semver bump from those commits using conventional commit prefixes:
-   - any `!:` suffix or `BREAKING CHANGE` in body → **major** bump
-   - any `feat:` / `feat(` → **minor** bump
-   - only `fix:` / `chore:` / `docs:` / `refactor:` / `test:` → **patch** bump
-   - no relevant commits → **none** (build-only bump)
+Suggest a semver bump from those commits using conventional commit prefixes:
+- any `!:` suffix or `BREAKING CHANGE` in body → **major** bump
+- any `feat:` / `feat(` → **minor** bump
+- only `fix:` / `chore:` / `docs:` / `refactor:` / `test:` → **patch** bump
+- no relevant commits → **none** (build-only bump)
 
-4. The suggestion is overridden by `$ARGUMENTS` if provided:
-   - `1.2.0` → set marketing version to `1.2.0` exactly
-   - `major` / `minor` / `patch` → use that bump level
-   - `none` / `build` → no marketing bump, just build bump
-   - (no argument) → present the suggestion and let the user choose
+The suggestion is overridden by `$ARGUMENTS` if provided:
+- `1.2.0` → set marketing version to `1.2.0` exactly
+- `major` / `minor` / `patch` → use that bump level
+- `none` / `build` → no marketing bump, just build bump
+- (no argument) → present the suggestion and let the user choose
 
-**Build numbers are monotonic** — always increment by 1 from the current value, regardless of whether the marketing version bumps. This matches Signal-iOS conventions and gives you unambiguous build identifiers.
+### Per-build release notes
 
-Categorize the same commit list for release notes display:
+Per-build release notes describe **what's new in this specific build**, not what's new in the marketing version. They should be the diff from the **previous tag** (any kind — could be the previous build tag or the previous marketing tag).
+
+```bash
+git describe --tags --abbrev=0 2>/dev/null || echo ""
+```
+
+Gather commits since that tag:
+
+```bash
+git log <previous-tag>..HEAD --oneline --no-decorate
+```
+
+Categorize using conventional commit prefixes:
 - `feat:` / `feat(` → Features
 - `fix:` / `fix(` → Fixes
-- `chore:` / `docs:` / `refactor:` / `test:` → Other
+- `chore:` / `docs:` / `refactor:` / `test:` → Other (typically omit from user-facing notes — internal stuff like tooling, CI, skill files)
 
-Present to the user:
+Skip commits whose changes aren't user-facing (purely internal tooling, CI, build infrastructure, skill/docs files). Use judgment.
+
+For the **first build of a new marketing version**, the previous tag will be the previous marketing version, so the notes naturally show everything new in this version. For **subsequent builds of the same marketing version**, the notes show only what changed since the last build (e.g. "fixed the camera permission button").
+
+### Present to user
 
 ```
 Current: 1.1.0 build 3
@@ -98,16 +114,11 @@ Other options:
   - none   → 1.1.0 build 4 (just bump build, keep marketing version)
   - custom (specify a version)
 
-Cumulative changes since v1.0.0:
-### Features
-- Import accounts from Google Authenticator migration QR codes (e04de49)
-- ...
-
+Per-build release notes (diff from v1.1.0-3):
 ### Fixes
 - Rename camera permission button to "Continue" (e9d9d3c)
-- ...
 
-Which? (default: suggested)
+Which version? (default: suggested)
 ```
 
 Wait for the user to pick. If they accept suggested or specify another bump/version, resolve to a final marketing version + build number combination and confirm before continuing.
