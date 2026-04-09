@@ -43,7 +43,7 @@ struct AccountScanView: View {
                     icon: "camera",
                     title: "Camera Access",
                     message: "Sesame needs camera access to scan QR codes.",
-                    buttonTitle: "Allow Camera",
+                    buttonTitle: "Continue",
                     isFullHeight: isFullHeight,
                     action: onRequestPermission
                 )
