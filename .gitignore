@@ -14,7 +14,7 @@ xcuserdata/
 # Local dev config
 app/Development.xcconfig
 .claude/settings.local.json
-.local/
+.local
 
 # macOS
 .DS_Store
