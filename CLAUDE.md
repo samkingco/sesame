@@ -1,128 +1,88 @@
 # CLAUDE.md
 
-Sesame is a native iOS 2FA authenticator built with Swift and SwiftUI. Fast, native, open source. No accounts, no telemetry, no cloud backend. Your secrets stay on your device by default.
-
-## SwiftUI Patterns
-
-Before writing or editing SwiftUI code, read `.claude/skills/swiftui-pro/references/` and follow those patterns while writing.
-
-## Development Philosophy
-
-- **Simplicity First**: Start with the minimal solution. Add complexity only when proven necessary.
-- **No Over-Engineering**: Build only what's needed now, not what might be needed later.
-- **Self-Documenting Code**: Prefer clear, readable code with good naming over extensive comments.
-- **Avoid Abstraction Layers**: Don't create abstractions for single use cases.
-- **Direct Solutions**: If a problem can be solved directly, don't add indirection.
-
 ## Target
 
 - iOS 18+
-- Swift, SwiftUI, SwiftData
-- SPM for dependencies
+- Swift 6.2 with modern concurrency
+- SwiftUI, SwiftData
+- SPM only. No third-party frameworks without asking first.
+- Avoid UIKit unless a specific API genuinely requires it.
 
 ## Architecture
 
-- **SwiftData** for account metadata, profiles, settings
-- **Keychain** for TOTP/HOTP secret keys
-- **Custom OTP generation** (TOTP + HOTP)
-- **AVFoundation** for QR code scanning
+- SwiftData for account metadata, profiles, settings
+- Keychain for TOTP/HOTP secret keys
+- Custom OTP generation (TOTP + HOTP)
+- AVFoundation for QR code scanning
 - `@Observable` view models, no MVVM ceremony
 - Single `NavigationStack`, all interactions via sheets
+
+## Project structure
+
+- `app/project.yml` — XcodeGen spec. Run `cd app && xcodegen generate` after changes.
+- `app/Sesame/` — app source, feature-based folders
+  - `Models/` — Account, Profile, enums
+  - `Services/` — KeychainService, AccountService, ProfileService, CodeService
+  - `Parsers/`, `Extensions/`
+- `app/SesameTests/` — unit tests
+- `scripts/` — screenshot and video recording
+
+## Sheet modifiers
+
+All interactions use sheets.
+
+- Outermost wrapper: `.sesameSheet(currentDetent:)`
+- Form/List/content inside: `.sesameSheetContent()`
+- Individual rows: `.sesameRowBackground()`
+- Empty states inside sheets: `ContentUnavailableView` + `.safeAreaPadding(.bottom, 20)` + `.sesameSheetContent()`
+- Full-height empty states (main account list): `.safeAreaPadding(.bottom, 80)`
+
+Defined in `app/Sesame/Extensions/SesameModifiers.swift`.
+
+## SwiftUI conventions
+
+- Row views inside `List`/`ForEach`: extract into their own `View` structs, not methods.
+- Button actions and business logic: extract into methods, not inline in view body.
+- Button modifier order: `.bold()`, `.disabled()`, `.tint()`.
+- One type per Swift file. File name matches primary type.
+- `*Sheet` suffix = standalone sheet wrapper with its own `NavigationStack`. `*View` suffix = everything else.
+- `// MARK:` only in files over ~50 lines.
+
+## Fonts
+
+- Account issuer: `.font(.headline)`.
+- Account name / secondary: `.font(.subheadline)` + `.foregroundStyle(.secondary)`.
+- OTP codes: monospaced, large. `.title2.monospaced()` in list rows; larger in detail/confirmation.
+
+## Error handling
+
+- Destructive actions surface errors via alert, not `try?`.
+- Alert pattern: `@State showError: Bool` + `@State errorMessage: String?` + `.alert("Title", isPresented:)`.
+- `try?` only for truly ignorable failures (`Task.sleep`).
+- `do/catch` with `logger.error(...)` when failure changes behaviour.
+- `os.Logger` with appropriate subsystem/category.
+
+## Invariants
+
+- All account mutations go through `AccountService`. Never post notifications manually.
+- All profile mutations go through `ProfileService`.
+- `AccountService` handles backup scheduling and AutoFill sync as side effects. `ProfileService` handles backup scheduling.
+- All code generation goes through `CodeService`. Never call `TOTPGenerator` / `HOTPGenerator` directly.
+- Views never read secrets from keychain directly. `CodeService` owns the secret cache.
+- `GetCodeIntent` creates its own `CodeService` (runs outside app lifecycle).
+
+## Tests
+
+- Shared doubles in `SesameTests/Support/SesameTestHelpers.swift`. Use `StubKeychain` / `SpyKeychain`.
+- In-memory `ModelContainer` + isolated `UserDefaults(suiteName:)` for test isolation.
+- UI tests required before release tag, not for regular builds.
 
 ## Commands
 
 ```bash
-# Generate Xcode project (after changing app/project.yml)
-cd app && xcodegen generate && cd ..
-
-# Build
+cd app && xcodegen generate                    # after editing project.yml
 xcodebuild -project app/Sesame.xcodeproj -scheme Sesame -destination 'platform=iOS Simulator,name=iPhone 16' build
-
-# Tests
 xcodebuild test -project app/Sesame.xcodeproj -scheme Sesame -destination 'platform=iOS Simulator,name=iPhone 16'
-
-# App Store screenshots
-./scripts/screenshots.sh
-
-# Record marketing videos
-./scripts/record-video.sh
+./scripts/screenshots.sh                       # App Store screenshots
+./scripts/record-video.sh                      # marketing videos
 ```
-
-## Sheet Conventions
-
-All interactions use sheets. Apply these modifiers consistently:
-
-- **Outermost sheet wrapper:** `.sesameSheet(currentDetent:)` — configures detents, background
-- **Form/List/content inside a sheet:** `.sesameSheetContent()` — hides scroll background, clears nav container
-- **Individual rows:** `.sesameRowBackground()` — themed row background
-- **Empty states:** `ContentUnavailableView` + `.safeAreaPadding(.bottom, 20)` + `.sesameSheetContent()`
-- **Full-height empty states** (e.g. main account list): `.safeAreaPadding(.bottom, 80)` instead
-
-See `app/Sesame/Extensions/SesameModifiers.swift` for definitions.
-
-## Project Structure
-
-- `app/` — Xcode project source
-  - `project.yml` — XcodeGen spec (generates `Sesame.xcodeproj`)
-  - `Sesame/` — app source
-    - `Models/` — Account, Profile, enums (SwiftData + Codable)
-    - `Services/` — KeychainService
-    - `Parsers/` — OTPAuthParser
-  - `SesameTests/` — unit tests
-- `scripts/` — screenshot and video recording scripts
-- `site/` — marketing website
-
-## Error Handling
-
-- Use `try?` only when failure is truly ignorable (e.g. `Task.sleep`)
-- Use `do/catch` with `logger.error(...)` for anything where failure changes behaviour or leaves bad state
-- Always log at `.error` level using `os.Logger` with appropriate subsystem/category
-- User-facing destructive actions (e.g. delete) must surface errors via an alert, not swallow them
-
-## Modifier Ordering
-
-- Standard button modifier order: `.bold()`, `.disabled()`, `.tint()`
-- Sheet content views always apply `.sesameSheetContent()`
-- Sheet wrappers always apply `.sesameSheet(currentDetent:)`
-
-## Naming
-
-- File names match primary type name
-- `*Sheet` suffix = standalone sheet wrapper with its own `NavigationStack`
-- `*View` suffix = everything else
-- Test doubles: `Stub*` for data stubs, `Spy*` for call trackers. Always `final class`.
-
-## MARK Usage
-
-- Only use `// MARK:` in files over ~50 lines
-- MARKs should segment meaningfully different sections, not just label the obvious
-
-## Access Control
-
-- Properties not accessed outside their type should be `private`
-
-## Comments
-
-- Only comment the "why", not the "what"
-- Exception: `Task.detached` and other non-obvious patterns should have a brief inline comment explaining the reason
-
-## Account Mutations
-
-- All account create/update/delete mutations must go through `AccountService`
-- All profile create/update/delete mutations must go through `ProfileService`
-- Never post notifications manually for account changes
-- `AccountService` handles backup scheduling and AutoFill sync as side effects
-- `ProfileService` handles backup scheduling as a side effect
-
-## Code Generation & Secrets
-
-- All code generation goes through `CodeService`. Never call `TOTPGenerator` or `HOTPGenerator` directly — only `CodeService` calls them
-- Never read secrets from keychain directly in views. `CodeService` owns the secret cache and reads from keychain once per account per session
-- `GetCodeIntent` creates its own `CodeService` instance since it runs outside the app lifecycle
-
-## Test Patterns
-
-- Use shared test doubles from `SesameTests/Support/SesameTestHelpers.swift`
-- Don't create local keychain test doubles — use `StubKeychain` or `SpyKeychain`
-- Use in-memory `ModelContainer` and isolated `UserDefaults(suiteName:)` for test isolation
-- UI tests must pass before tagging a release — not required for regular development builds
