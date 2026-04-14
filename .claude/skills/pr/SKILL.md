@@ -150,29 +150,7 @@ Write the PR title and body following these rules:
 
 ### Body
 
-Use this template:
-
-```markdown
-## What
-
-<1-3 sentences: what this PR does, stated plainly>
-
-## Why
-
-<1-3 sentences: the motivation — what problem it solves or what it enables>
-
-## Changes
-
-<Bulleted list of the meaningful changes. Group by area if touching multiple parts. Skip trivial changes like import reordering.>
-
-## Screenshots impact
-
-<One of: "None" / list of affected screens from Step 5>
-
-## Test plan
-
-- [ ] <How to verify this works — specific steps a reviewer can follow>
-```
+Read the PR template at `.github/PULL_REQUEST_TEMPLATE.md` and fill each section from the branch's diff, commits, and conversation context. Keep the section order and headings exactly as the template has them. Replace each HTML-comment placeholder with the actual content. Leave any section empty if there's genuinely nothing to say (e.g. `Screenshots impact: None`).
 
 ### Changelog alignment
 
