@@ -32,15 +32,19 @@ enum ClipboardService {
             : UserDefaults.standard.integer(forKey: clearDurationKey)
     }
 
-    static func copy(_ string: String) {
+    /// Returns when the clipboard will be cleared, or nil if it won't be.
+    @discardableResult
+    static func copy(_ string: String) -> Date? {
         let duration = clearDuration
-        if duration > 0 {
-            UIPasteboard.general.setItems(
-                [[UTType.plainText.identifier: string]],
-                options: [.expirationDate: Date.now.addingTimeInterval(Double(duration))]
-            )
-        } else {
+        guard duration > 0 else {
             UIPasteboard.general.string = string
+            return nil
         }
+        let clearsAt = Date.now.addingTimeInterval(Double(duration))
+        UIPasteboard.general.setItems(
+            [[UTType.plainText.identifier: string]],
+            options: [.expirationDate: clearsAt]
+        )
+        return clearsAt
     }
 }

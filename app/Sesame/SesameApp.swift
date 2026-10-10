@@ -68,6 +68,7 @@ struct SesameApp: App {
             #endif
                 .task {
                     purgeOnLaunch()
+                    LiveActivityService.end()
                     #if ICLOUD_CAPABLE
                         await backupStore.resolveICloudAdapter()
                     #endif

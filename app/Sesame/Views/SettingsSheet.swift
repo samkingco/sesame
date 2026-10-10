@@ -53,7 +53,9 @@ struct SettingsSheet: View {
                     Toggle("Show in Dynamic Island", isOn: $isLiveActivityEnabled)
                         .sesameRowBackground()
                         .onChange(of: isLiveActivityEnabled) {
-                            if isLiveActivityEnabled, !LiveActivityService.areSystemActivitiesEnabled {
+                            if !isLiveActivityEnabled {
+                                LiveActivityService.end()
+                            } else if !LiveActivityService.areSystemActivitiesEnabled {
                                 showLiveActivityAlert = true
                             }
                         }
