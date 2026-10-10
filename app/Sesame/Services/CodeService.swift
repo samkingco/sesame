@@ -9,7 +9,7 @@ final class CodeService {
     private var secrets: [UUID: String] = [:]
     private var copiedCode: String?
     private var copiedResetTask: Task<Void, Never>?
-    private var bufferUpdateTask: Task<Void, Never>?
+    private var clipboardClearsAt: Date?
     private let keychain: KeychainServiceProtocol
     private let logger = Logger(subsystem: Logger.appSubsystem, category: "CodeService")
 
@@ -36,6 +36,9 @@ final class CodeService {
     func evictSecret(for accountId: UUID) {
         secrets.removeValue(forKey: accountId)
         codes.removeValue(forKey: accountId)
+        if LiveActivityService.activeAccountId == accountId {
+            LiveActivityService.end()
+        }
     }
 
     func clearSecretCache() {
@@ -57,29 +60,6 @@ final class CodeService {
                 codes[account.id] = newCode
                 if account.id == copiedAccountId, newCode.code != copiedCode {
                     clearCopied()
-                }
-                if account.id == LiveActivityService.activeAccountId,
-                   account.type == .totp, let windowEnd = newCode.windowEnd
-                {
-                    let nextCode = generateNextCode(
-                        accountId: account.id,
-                        algorithm: account.algorithm,
-                        digits: account.digits,
-                        period: account.period,
-                        after: windowEnd
-                    )
-                    LiveActivityService.update(
-                        code: newCode.code,
-                        nextCode: remainingSeconds(until: windowEnd) <= 20 ? nextCode : nil,
-                        expiresAt: windowEnd
-                    )
-                    scheduleBufferUpdate(
-                        accountId: account.id,
-                        algorithm: account.algorithm,
-                        digits: account.digits,
-                        period: account.period,
-                        windowEnd: windowEnd
-                    )
                 }
             } catch {
                 logger.error("Failed to generate code for account \(account.id): \(error)")
@@ -161,7 +141,7 @@ final class CodeService {
     func copyCode(for accountId: UUID, code: String? = nil) {
         let codeString = code ?? codes[accountId]?.code
         guard let codeString else { return }
-        ClipboardService.copy(codeString)
+        clipboardClearsAt = ClipboardService.copy(codeString)
 
         copiedResetTask?.cancel()
         copiedAccountId = accountId
@@ -182,91 +162,50 @@ final class CodeService {
 
     // MARK: - Live Activity
 
+    /// Shows the copied code until the clipboard clears. Call after `copyCode`.
     func startLiveActivity(for account: Account) {
-        guard account.type == .totp else { return }
-        guard let generated = codes[account.id], let windowEnd = generated.windowEnd else { return }
+        guard account.type == .totp, account.id == copiedAccountId,
+              let secret = secret(for: account.id)
+        else { return }
 
-        let remaining = remainingSeconds(until: windowEnd)
-        let nextCode = generateNextCode(
-            accountId: account.id,
-            algorithm: account.algorithm,
-            digits: account.digits,
-            period: account.period,
-            after: windowEnd
-        )
-        let duration = ClipboardService.clearDuration
-        let dismissAfter: TimeInterval? = duration > 0 ? TimeInterval(duration) : nil
+        let algorithm = account.algorithm
+        let digits = account.digits
+        let period = account.period
 
+        // Captures the secret so updates don't refill the cache after it's cleared in the background
         LiveActivityService.start(
             accountId: account.id,
-            code: generated.code,
-            nextCode: remaining <= 20 ? nextCode : nil,
-            expiresAt: windowEnd,
-            issuer: account.effectiveIssuer,
-            dismissAfter: dismissAfter
-        )
-
-        scheduleBufferUpdate(
-            accountId: account.id,
-            algorithm: account.algorithm,
-            digits: account.digits,
-            period: account.period,
-            windowEnd: windowEnd
-        )
+            attributes: CopiedCodeAttributes(issuer: account.effectiveIssuer, name: account.effectiveName),
+            dismissAt: clipboardClearsAt
+        ) { date in
+            Self.liveActivityState(secret: secret, algorithm: algorithm, digits: digits, period: period, at: date)
+        }
     }
 
-    private func generateNextCode(
-        accountId: UUID,
+    static func liveActivityState(
+        secret: String,
         algorithm: OTPAlgorithm,
         digits: Int,
         period: Int,
-        after windowEnd: Date
-    ) -> String? {
-        guard let secret = secret(for: accountId) else { return nil }
-        return TOTPGenerator.generate(
+        at date: Date
+    ) -> CopiedCodeAttributes.ContentState? {
+        guard let result = TOTPGenerator.generate(
             secret: secret,
             algorithm: algorithm,
             digits: digits,
             period: period,
-            timestamp: windowEnd.addingTimeInterval(1)
-        )?.code
-    }
+            timestamp: date
+        ) else { return nil }
 
-    private func scheduleBufferUpdate(
-        accountId: UUID,
-        algorithm: OTPAlgorithm,
-        digits: Int,
-        period: Int,
-        windowEnd: Date
-    ) {
-        bufferUpdateTask?.cancel()
-
-        let bufferTime = windowEnd.addingTimeInterval(-20)
-        let delay = bufferTime.timeIntervalSinceNow
-        guard delay > 0 else { return }
-
-        bufferUpdateTask = Task {
-            try? await Task.sleep(for: .seconds(delay))
-            guard !Task.isCancelled else { return }
-            guard LiveActivityService.activeAccountId == accountId else { return }
-            guard let generated = codes[accountId] else { return }
-
-            let nextCode = generateNextCode(
-                accountId: accountId,
-                algorithm: algorithm,
-                digits: digits,
-                period: period,
-                after: windowEnd
-            )
-            LiveActivityService.update(
-                code: generated.code,
-                nextCode: nextCode,
-                expiresAt: windowEnd
-            )
-        }
-    }
-
-    private func remainingSeconds(until date: Date) -> TimeInterval {
-        max(0, date.timeIntervalSinceNow)
+        return CopiedCodeAttributes.ContentState(
+            code: result.code,
+            colorState: CodeColorState(
+                code: result.code,
+                isCopied: false,
+                type: .totp,
+                remainingSeconds: Int(ceil(result.remainingSeconds))
+            ),
+            expiresAt: result.windowEnd
+        )
     }
 }

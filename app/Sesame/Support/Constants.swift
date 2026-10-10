@@ -6,7 +6,6 @@ enum UserDefaultsKey {
     static let clipboardClearDuration = "clipboardClearDuration"
     static let hapticFeedbackEnabled = "hapticFeedbackEnabled"
     static let siriIntentsEnabled = "siriIntentsEnabled"
-    static let autoFillEnabled = "autoFillEnabled"
     static let backupConfiguredPrefix = "backupConfigured."
     static let backupAutoBackupEnabledPrefix = "backupAutoBackupEnabled."
     static let backupRecoveryKeyWarningShown = "backupRecoveryKeyWarningShown"

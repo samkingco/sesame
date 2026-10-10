@@ -12,7 +12,8 @@ struct SettingsSheet: View {
     @AppStorage(SiriIntentService.enabledKey) private var isSiriIntentsEnabled = false
     @AppStorage(LiveActivityService.enabledKey) private var isLiveActivityEnabled = false
     #if AUTOFILL_CAPABLE
-        @AppStorage(AutoFillService.enabledKey) private var isAutoFillEnabled = false
+        @State private var isAutoFillEnabled = false
+        @State private var showAutoFillOffAlert = false
     #endif
     @Query(filter: #Predicate<Account> { $0.deletedAt != nil })
     private var deletedAccounts: [Account]
@@ -53,7 +54,9 @@ struct SettingsSheet: View {
                     Toggle("Show in Dynamic Island", isOn: $isLiveActivityEnabled)
                         .sesameRowBackground()
                         .onChange(of: isLiveActivityEnabled) {
-                            if isLiveActivityEnabled, !LiveActivityService.areSystemActivitiesEnabled {
+                            if !isLiveActivityEnabled {
+                                LiveActivityService.end()
+                            } else if !LiveActivityService.areSystemActivitiesEnabled {
                                 showLiveActivityAlert = true
                             }
                         }
@@ -68,16 +71,14 @@ struct SettingsSheet: View {
                             Task { await SiriIntentService.updateSpotlightIndex() }
                         }
                     #if AUTOFILL_CAPABLE
-                        Toggle("AutoFill Codes", isOn: $isAutoFillEnabled)
+                        Toggle("AutoFill Codes", isOn: autoFillToggle)
                             .sesameRowBackground()
-                            .onChange(of: isAutoFillEnabled) {
-                                Task {
-                                    if isAutoFillEnabled {
-                                        await AutoFillService.syncIdentityStore()
-                                    } else {
-                                        await AutoFillService.clearIdentityStore()
-                                    }
-                                }
+                            .task(id: scenePhase, refreshAutoFillState)
+                            .alert("Turn Off AutoFill", isPresented: $showAutoFillOffAlert) {
+                                Button("Open Settings", action: openAutoFillSettings)
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text("Turn off Sesame in Settings › General › AutoFill & Passwords.")
                             }
                     #endif
                 }
@@ -193,6 +194,38 @@ struct SettingsSheet: View {
             }
         )
     }
+
+    #if AUTOFILL_CAPABLE
+        // Binding(get:set:) — the system owns this setting, so turning it off happens in Settings
+        private var autoFillToggle: Binding<Bool> {
+            Binding(
+                get: { isAutoFillEnabled },
+                set: { newValue in
+                    if newValue {
+                        Task { await enableAutoFill() }
+                    } else {
+                        showAutoFillOffAlert = true
+                    }
+                }
+            )
+        }
+
+        private func enableAutoFill() async {
+            isAutoFillEnabled = await AutoFillService.requestEnable()
+            if isAutoFillEnabled {
+                await AutoFillService.syncIdentityStore()
+            }
+        }
+
+        private func refreshAutoFillState() async {
+            guard scenePhase == .active else { return }
+            isAutoFillEnabled = await AutoFillService.isEnabled
+        }
+
+        private func openAutoFillSettings() {
+            Task { await AutoFillService.openSettings() }
+        }
+    #endif
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"

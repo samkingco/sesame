@@ -104,9 +104,7 @@ struct RestoreConfirmView: View {
             restoreComplete = true
             backupStore.scheduleAutoBackup()
             #if AUTOFILL_CAPABLE
-                if AutoFillService.isEnabled {
-                    Task { await AutoFillService.syncIdentityStore() }
-                }
+                Task { await AutoFillService.syncIdentityStore() }
             #endif
         } catch {
             restoreError = error.localizedDescription

@@ -1,13 +1,19 @@
 import ActivityKit
 import Foundation
 import os
+import UIKit
 
 @MainActor
 enum LiveActivityService {
+    typealias State = CopiedCodeAttributes.ContentState
+
     static let enabledKey = UserDefaultsKey.liveActivityEnabled
 
-    private static var currentActivity: Activity<CopiedCodeAttributes>?
-    private static var dismissTask: Task<Void, Never>?
+    private static let staleGracePeriod: TimeInterval = 1
+
+    private static var refreshTask: Task<Void, Never>?
+    private static var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    private static var lockObserver: (any NSObjectProtocol)?
     private static let logger = Logger(subsystem: Logger.appSubsystem, category: "LiveActivityService")
 
     private(set) static var activeAccountId: UUID?
@@ -22,78 +28,124 @@ enum LiveActivityService {
 
     // MARK: - Lifecycle
 
+    /// Keeps the activity current with `makeState` until `dismissAt`, the device locks, or the
+    /// app runs out of background time, whichever is first. A suspended app can't end it later.
     static func start(
         accountId: UUID,
-        code: String,
-        nextCode: String?,
-        expiresAt: Date,
-        issuer: String,
-        dismissAfter: TimeInterval?
+        attributes: CopiedCodeAttributes,
+        dismissAt: Date?,
+        makeState: @escaping @MainActor (Date) -> State?
     ) {
-        guard isEnabled, areSystemActivitiesEnabled else { return }
+        guard isEnabled, areSystemActivitiesEnabled, let state = makeState(.now) else { return }
 
-        endCurrent()
+        end()
 
-        let attributes = CopiedCodeAttributes(issuer: issuer)
-        let state = CopiedCodeAttributes.ContentState(
-            code: code,
-            nextCode: nextCode,
-            expiresAt: expiresAt
-        )
-        let content = ActivityContent(state: state, staleDate: expiresAt)
-
+        let activity: Activity<CopiedCodeAttributes>
         do {
-            currentActivity = try Activity.request(
+            activity = try Activity.request(
                 attributes: attributes,
-                content: content,
+                content: content(for: state, dismissAt: dismissAt),
                 pushType: nil
             )
-            activeAccountId = accountId
         } catch {
             logger.error("Failed to start live activity: \(error)")
             return
         }
 
-        if let dismissAfter, dismissAfter > 0 {
-            dismissTask = Task {
-                try? await Task.sleep(for: .seconds(dismissAfter))
-                guard !Task.isCancelled else { return }
-                endCurrent()
+        activeAccountId = accountId
+        beginBackgroundTask()
+        observeDeviceLock()
+
+        refreshTask = Task {
+            await keepCurrent(activity, from: state, dismissAt: dismissAt, makeState: makeState)
+        }
+    }
+
+    /// Also ends activities left over from a previous launch.
+    static func end() {
+        refreshTask?.cancel()
+        refreshTask = nil
+        activeAccountId = nil
+        stopObservingDeviceLock()
+
+        let activities = Activity<CopiedCodeAttributes>.activities
+        let task = backgroundTask
+        backgroundTask = .invalid
+
+        Task {
+            for activity in activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+            if task != .invalid {
+                UIApplication.shared.endBackgroundTask(task)
             }
         }
     }
 
-    static func update(code: String, nextCode: String?, expiresAt: Date) {
-        guard let activity = currentActivity else { return }
-
-        let state = CopiedCodeAttributes.ContentState(
-            code: code,
-            nextCode: nextCode,
-            expiresAt: expiresAt
-        )
-        let content = ActivityContent(state: state, staleDate: expiresAt)
-
-        Task {
-            await activity.update(content)
-        }
+    static func nextRefresh(after state: State, dismissAt: Date?, now: Date = .now) -> Date {
+        let next = CodeColorState.nextChange(after: now, expiresAt: state.expiresAt)
+        guard let dismissAt else { return next }
+        return min(next, dismissAt)
     }
 
-    static func end() {
-        endCurrent()
+    /// If the app is suspended before it can update or end the activity, the
+    /// widget hides the code from this date.
+    static func staleDate(for state: State, dismissAt: Date?) -> Date {
+        min(state.expiresAt, dismissAt ?? .distantFuture)
+            .addingTimeInterval(staleGracePeriod)
     }
 
     // MARK: - Private
 
-    private static func endCurrent() {
-        dismissTask?.cancel()
-        dismissTask = nil
-        activeAccountId = nil
+    private static func keepCurrent(
+        _ activity: Activity<CopiedCodeAttributes>,
+        from initial: State,
+        dismissAt: Date?,
+        makeState: @MainActor (Date) -> State?
+    ) async {
+        var state = initial
+        while true {
+            let wake = nextRefresh(after: state, dismissAt: dismissAt)
+            try? await Task.sleep(for: .seconds(max(0, wake.timeIntervalSinceNow)))
+            guard !Task.isCancelled else { return }
 
-        guard let activity = currentActivity else { return }
-        currentActivity = nil
+            let isDismissed = dismissAt.map { wake >= $0 } ?? false
+            guard !isDismissed, activity.activityState == .active,
+                  let next = makeState(max(.now, wake))
+            else {
+                end()
+                return
+            }
 
-        Task {
-            await activity.end(nil, dismissalPolicy: .immediate)
+            state = next
+            await activity.update(content(for: state, dismissAt: dismissAt))
         }
+    }
+
+    private static func content(for state: State, dismissAt: Date?) -> ActivityContent<State> {
+        ActivityContent(state: state, staleDate: staleDate(for: state, dismissAt: dismissAt))
+    }
+
+    private static func beginBackgroundTask() {
+        guard backgroundTask == .invalid else { return }
+        backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Copied code Live Activity") {
+            end()
+        }
+    }
+
+    private static func observeDeviceLock() {
+        guard lockObserver == nil else { return }
+        lockObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.protectedDataWillBecomeUnavailableNotification,
+            object: nil,
+            queue: .main,
+            using: { _ in MainActor.assumeIsolated { end() } }
+        )
+    }
+
+    private static func stopObservingDeviceLock() {
+        guard let lockObserver else { return }
+        NotificationCenter.default.removeObserver(lockObserver)
+        self.lockObserver = nil
     }
 }

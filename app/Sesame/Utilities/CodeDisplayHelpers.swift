@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Code color state
 
-enum CodeColorState {
+enum CodeColorState: Codable {
     case empty
     case normal
     case warning
@@ -32,6 +32,13 @@ enum CodeColorState {
         } else {
             self = .normal
         }
+    }
+
+    /// Next time a TOTP code's state changes on its way to `expiresAt`.
+    static func nextChange(after date: Date, expiresAt: Date) -> Date {
+        [warningThreshold, criticalThreshold, 0]
+            .map { expiresAt.addingTimeInterval(-Double($0)) }
+            .first { $0 > date } ?? expiresAt
     }
 
     var color: AnyShapeStyle {

@@ -4,67 +4,29 @@ import WidgetKit
 
 struct CopiedCodeLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: CopiedCodeAttributes.self) { _ in
-            // No Lock Screen presentation
-            EmptyView()
+        ActivityConfiguration(for: CopiedCodeAttributes.self) { context in
+            // Never show the code on the Lock Screen
+            CopiedCodeLockScreenView(issuer: context.attributes.issuer)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    ExpandedView(state: context.state, issuer: context.attributes.issuer)
+                    CopiedCodeExpandedView(
+                        attributes: context.attributes,
+                        state: context.state,
+                        isStale: context.isStale
+                    )
                 }
             } compactLeading: {
-                Image("seeds")
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundStyle(.white)
+                SeedsIcon()
             } compactTrailing: {
-                Text(CodeFormatting.formatted(context.state.code))
+                Text(CodeFormatting.formatted(context.isStale ? nil : context.state.code))
                     .font(.caption.monospacedDigit())
                     .bold()
+                    .foregroundStyle(context.isStale ? CodeColorState.empty.color : context.state.colorState.color)
                     .padding(.trailing, 2)
             } minimal: {
-                Image("seeds")
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundStyle(.white)
+                SeedsIcon()
             }
         }
-    }
-}
-
-// MARK: - Expanded view
-
-private struct ExpandedView: View {
-    let state: CopiedCodeAttributes.ContentState
-    let issuer: String
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(issuer)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(CodeFormatting.formatted(state.code))
-                .font(.title.monospacedDigit())
-                .bold()
-                .contentTransition(.numericText())
-
-            Text(timerInterval: Date.now ... state.expiresAt, countsDown: true)
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            if let nextCode = state.nextCode {
-                HStack(spacing: 4) {
-                    Text("Next:")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(CodeFormatting.formatted(nextCode))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.vertical, 4)
     }
 }

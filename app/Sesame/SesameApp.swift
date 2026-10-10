@@ -68,19 +68,21 @@ struct SesameApp: App {
             #endif
                 .task {
                     purgeOnLaunch()
+                    LiveActivityService.end()
                     #if ICLOUD_CAPABLE
                         await backupStore.resolveICloudAdapter()
-                    #endif
-                    #if AUTOFILL_CAPABLE
-                        if AutoFillService.isEnabled {
-                            await AutoFillService.syncIdentityStore()
-                        }
                     #endif
                 }
         }
         .modelContainer(modelContainer)
         .onChange(of: scenePhase, initial: true) { _, newPhase in
             lockState.handleScenePhase(newPhase)
+            #if AUTOFILL_CAPABLE
+                // Picks up Sesame being turned on in Settings, which starts with an empty store
+                if newPhase == .active {
+                    Task { await AutoFillService.syncIdentityStore() }
+                }
+            #endif
             if newPhase == .background {
                 codeService.clearSecretCache()
                 schedulePurgeTask()
