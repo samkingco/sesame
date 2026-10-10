@@ -36,6 +36,18 @@ struct DomainMatchingTests {
         #expect(!DomainMatcher.matches(domain: "", website: "github.com"))
         #expect(!DomainMatcher.matches(domain: "github.com", website: ""))
     }
+
+    @Test func urlsAndWwwMatch() {
+        #expect(DomainMatcher.matches(domain: "https://github.com/sessions/two-factor", website: "github.com"))
+        #expect(DomainMatcher.matches(domain: "github.com", website: "https://www.github.com/login"))
+    }
+
+    @Test func normalizesWebsites() {
+        #expect(DomainMatcher.normalizedDomain("github.com") == "github.com")
+        #expect(DomainMatcher.normalizedDomain(" https://www.GitHub.com/login ") == "github.com")
+        #expect(DomainMatcher.normalizedDomain("aws.amazon.com:443/console") == "aws.amazon.com")
+        #expect(DomainMatcher.normalizedDomain("") == nil)
+    }
 }
 
 // MARK: - Account Filtering
@@ -100,7 +112,8 @@ struct AccountFilteringTests {
     @Test func emptyDomainsReturnsAllNonDeletedAccounts() {
         let a = makeAccount(issuer: "GitHub", website: "github.com")
         let b = makeAccount(issuer: "Google", website: "google.com")
-        let result = DomainMatcher.filterAccounts([a, b], forDomains: [])
+        let deleted = makeAccount(issuer: "GitLab", website: "gitlab.com", deletedAt: .now)
+        let result = DomainMatcher.filterAccounts([a, b, deleted], forDomains: [])
         #expect(result.count == 2)
     }
 
@@ -108,6 +121,46 @@ struct AccountFilteringTests {
         let account = makeAccount(issuer: "GitHub", website: "github.com")
         let result = DomainMatcher.filterAccounts([account], forDomains: ["gitlab.com"])
         #expect(result.isEmpty)
+    }
+}
+
+// MARK: - Identities
+
+@MainActor
+struct AutoFillIdentitiesTests {
+    private func makeAccount(
+        issuer: String = "GitHub",
+        website: String? = "github.com",
+        deletedAt: Date? = nil,
+        type: OTPType = .totp
+    ) -> Account {
+        Account(
+            profileId: Profile.defaultID,
+            issuer: issuer,
+            name: "user",
+            type: type,
+            deletedAt: deletedAt,
+            website: website
+        )
+    }
+
+    @Test func identityUsesNormalizedDomain() throws {
+        let account = makeAccount(website: "https://www.GitHub.com/login")
+        let identity = try #require(AutoFillIdentities.make(for: [account]).first)
+        #expect(identity.serviceIdentifier.identifier == "github.com")
+        #expect(identity.serviceIdentifier.type == .domain)
+        #expect(identity.recordIdentifier == account.id.uuidString)
+        #expect(identity.label == "GitHub (user)")
+    }
+
+    @Test func skipsAccountsThatCantBeFilled() {
+        let accounts = [
+            makeAccount(website: nil),
+            makeAccount(website: ""),
+            makeAccount(deletedAt: .now),
+            makeAccount(type: .hotp),
+        ]
+        #expect(AutoFillIdentities.make(for: accounts).isEmpty)
     }
 }
 

@@ -131,6 +131,12 @@ targets:
         group: Shared
       - path: Sesame/Support/SharedModelContainer.swift
         group: Shared
+      - path: Sesame/Services/DomainMatcher.swift
+        group: Shared
+      - path: Sesame/Services/AutoFillIdentities.swift
+        group: Shared
+      - path: Sesame/Extensions/Logger+Subsystem.swift
+        group: Shared
     entitlements:
       path: SesameAutoFill/SesameAutoFill.entitlements
       properties:
@@ -151,6 +157,7 @@ targets:
           NSExtensionAttributes:
             ASCredentialProviderExtensionCapabilities:
               ProvidesOneTimeCodes: true
+              ShowsConfigurationUI: true
     settings:
       base:
         GENERATE_INFOPLIST_FILE: true

@@ -1,8 +1,10 @@
 import AuthenticationServices
+import os
 import SwiftData
 import SwiftUI
 
 class CredentialProviderViewController: ASCredentialProviderViewController {
+    private let logger = Logger(subsystem: Logger.appSubsystem, category: "CredentialProvider")
     private let appBundleId = Bundle.main.infoDictionary?["AppBundleID"] as! String
     private var keychainService: String {
         "\(appBundleId).secrets"
@@ -36,6 +38,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         }
 
         guard let account = fetchAccount(id: accountId),
+              account.type == .totp,
               let secret = readSecret(for: accountId),
               let result = generateCode(account: account, secret: secret)
         else {
@@ -45,6 +48,20 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 
         let credential = ASOneTimeCodeCredential(code: result)
         extensionContext.completeOneTimeCodeRequest(using: credential)
+    }
+
+    // MARK: - Configuration
+
+    /// Called when Sesame is turned on in Settings, which starts with an empty identity store.
+    override func prepareInterfaceForExtensionConfiguration() {
+        Task {
+            do {
+                try await AutoFillIdentities.replace(with: fetchActiveAccounts())
+            } catch {
+                logger.error("Failed to sync AutoFill identities: \(error)")
+            }
+            extensionContext.completeExtensionConfigurationRequest()
+        }
     }
 
     // MARK: - Credential list (with UI)
@@ -92,22 +109,22 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         return try? context.fetch(descriptor).first
     }
 
-    private func fetchAccountsMatching(_ serviceIdentifiers: [ASCredentialServiceIdentifier]) -> [Account] {
+    private func fetchActiveAccounts() -> [Account] {
         guard let container = modelContainer else { return [] }
         let context = ModelContext(container)
-        let predicate = #Predicate<Account> { $0.deletedAt == nil && $0.website != nil }
-        let descriptor = FetchDescriptor<Account>(predicate: predicate)
-        guard let accounts = try? context.fetch(descriptor) else { return [] }
-
-        let requestedDomains = Set(serviceIdentifiers.map { $0.identifier.lowercased() })
-        if requestedDomains.isEmpty { return accounts }
-
-        return accounts.filter { account in
-            guard let website = account.website?.lowercased() else { return false }
-            return requestedDomains.contains(where: { domain in
-                domain == website || domain.hasSuffix(".\(website)")
-            })
+        let predicate = #Predicate<Account> { $0.deletedAt == nil }
+        let descriptor = FetchDescriptor<Account>(predicate: predicate, sortBy: [SortDescriptor(\.createdAt)])
+        do {
+            return try context.fetch(descriptor)
+        } catch {
+            logger.error("Failed to fetch accounts: \(error)")
+            return []
         }
+    }
+
+    private func fetchAccountsMatching(_ serviceIdentifiers: [ASCredentialServiceIdentifier]) -> [Account] {
+        let accounts = fetchActiveAccounts().filter { $0.type == .totp && $0.website != nil }
+        return DomainMatcher.filterAccounts(accounts, forDomains: serviceIdentifiers.map(\.identifier))
     }
 
     // MARK: - Keychain

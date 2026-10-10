@@ -94,9 +94,7 @@ enum AccountService {
     private static func afterMutation(backupStore: BackupStore) {
         backupStore.scheduleAutoBackup()
         #if AUTOFILL_CAPABLE
-            if AutoFillService.isEnabled {
-                Task { await AutoFillService.syncIdentityStore() }
-            }
+            Task { await AutoFillService.syncIdentityStore() }
         #endif
     }
 }
