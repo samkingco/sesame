@@ -78,7 +78,7 @@ struct AccountListView: View {
         }
     }
 
-    // swiftui-pro: intentionally a computed property — real logic is in AccountListBody,
+    // Intentionally a computed property — real logic is in AccountListBody,
     // this just attaches sheets/toolbar which would need ~10 bindings if extracted.
     private var listContent: some View {
         AccountListBody(
