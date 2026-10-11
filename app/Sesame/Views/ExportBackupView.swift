@@ -95,7 +95,7 @@ struct ExportBackupView: View {
 
     // MARK: - File Helpers
 
-    // swiftui-pro: intentional DateFormatter — this is a filename component, not user-facing
+    // Intentional DateFormatter — this is a filename component, not user-facing
     // text, and it's created once in a button action (not on render).
     static func writeTempFile(blob: Data) throws -> URL {
         let formatter = DateFormatter()

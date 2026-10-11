@@ -68,13 +68,7 @@ struct AccountEntityQuery: EntityStringQuery {
 
         let accounts = try context.fetch(descriptor)
 
-        return accounts
-            .filter { account in
-                let issuer = account.effectiveIssuer
-                let name = account.effectiveName
-                return issuer.localizedStandardContains(string)
-                    || name.localizedStandardContains(string)
-            }
-            .map { AccountEntity(from: $0) }
+        return SearchMatcher.hits(for: string, in: accounts)
+            .map { AccountEntity(from: $0.account) }
     }
 }
