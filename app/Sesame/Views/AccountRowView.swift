@@ -58,10 +58,13 @@ struct AccountRowView: View {
     private func highlighted(_ text: String, highlight: SearchHit.Highlight?) -> AttributedString {
         var str = AttributedString(text)
         guard let highlight else { return str }
-        let chars = str.characters
-        let start = chars.index(chars.startIndex, offsetBy: highlight.offset)
-        let end = chars.index(start, offsetBy: highlight.length)
-        str[start ..< end].backgroundColor = profileTint.opacity(colorScheme == .dark ? 0.35 : 0.2)
+        let background = profileTint.opacity(colorScheme == .dark ? 0.35 : 0.2)
+        for range in highlight.ranges {
+            let chars = str.characters
+            let start = chars.index(chars.startIndex, offsetBy: range.lowerBound)
+            let end = chars.index(start, offsetBy: range.count)
+            str[start ..< end].backgroundColor = background
+        }
         return str
     }
 }

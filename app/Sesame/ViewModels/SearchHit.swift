@@ -16,17 +16,7 @@ struct SearchHit: Identifiable {
     }
 
     struct Highlight {
-        let offset: Int
-        let length: Int
-
-        init(offset: Int, length: Int) {
-            self.offset = offset
-            self.length = length
-        }
-
-        init(from range: Range<String.Index>, in text: String) {
-            offset = text.distance(from: text.startIndex, to: range.lowerBound)
-            length = text.distance(from: range.lowerBound, to: range.upperBound)
-        }
+        /// Character offsets into the matched text. Fuzzy matches can have several.
+        let ranges: [Range<Int>]
     }
 }
