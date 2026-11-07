@@ -60,10 +60,8 @@ final class QRScannerViewController: UIViewController,
 
     private func setupCamera() {
         guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device)
-        else { return }
-
-        guard captureSession.canAddInput(input) else { return }
+              let input = try? AVCaptureDeviceInput(device: device),
+              captureSession.canAddInput(input) else { return }
         captureSession.addInput(input)
 
         let output = AVCaptureMetadataOutput()

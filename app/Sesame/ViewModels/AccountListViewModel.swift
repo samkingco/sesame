@@ -58,7 +58,9 @@ extension Account {
     /// Issuer, then name, case-insensitively.
     func precedesAlphabetically(_ other: Account) -> Bool {
         let issuerCmp = effectiveIssuer.localizedCaseInsensitiveCompare(other.effectiveIssuer)
-        if issuerCmp != .orderedSame { return issuerCmp == .orderedAscending }
+        if issuerCmp != .orderedSame {
+            return issuerCmp == .orderedAscending
+        }
         return effectiveName.localizedCaseInsensitiveCompare(other.effectiveName) == .orderedAscending
     }
 }

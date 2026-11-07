@@ -21,6 +21,14 @@ identifier_name:
 cyclomatic_complexity:
   warning: 15
 
+opening_brace:
+  ignore_multiline_type_headers: true
+  ignore_multiline_statement_conditions: true
+  ignore_multiline_function_signatures: true
+
+function_parameter_count:
+  warning: 6
+
 opt_in_rules:
   - sorted_imports
   - private_over_fileprivate

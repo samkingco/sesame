@@ -78,8 +78,8 @@ struct AccountListView: View {
         }
     }
 
-    // Intentionally a computed property — real logic is in AccountListBody,
-    // this just attaches sheets/toolbar which would need ~10 bindings if extracted.
+    /// Intentionally a computed property — real logic is in AccountListBody,
+    /// this just attaches sheets/toolbar which would need ~10 bindings if extracted.
     private var listContent: some View {
         AccountListBody(
             viewModel: viewModel,
@@ -137,8 +137,8 @@ struct AccountListView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: { account in
-            // swiftlint:disable:next line_length
             Text(
+                // swiftlint:disable:next line_length
                 "\"\(account.effectiveIssuer)\" will be moved to Recently Deleted and permanently removed after 48 hours."
             )
         }
@@ -317,19 +317,19 @@ private struct AccountListBody: View {
         }
         #if DEMO_ENABLED
         .onChange(of: viewModel.selectedProfileId) {
-                if LaunchMode.demo == .video {
-                    if viewModel.selectedProfileId == Profile.defaultID {
-                        clock.pause()
-                        clock.setDate(clock.referenceDate)
-                    } else {
-                        clock.resume()
-                    }
+            if LaunchMode.demo == .video {
+                if viewModel.selectedProfileId == Profile.defaultID {
+                    clock.pause()
+                    clock.setDate(clock.referenceDate)
+                } else {
+                    clock.resume()
                 }
             }
+        }
         #endif
-            .onAppear {
-                codeService.refreshCodes(for: allAccounts, at: clock.now)
-            }
+        .onAppear {
+            codeService.refreshCodes(for: allAccounts, at: clock.now)
+        }
     }
 
     private func profileColor(for profileId: UUID) -> Color {

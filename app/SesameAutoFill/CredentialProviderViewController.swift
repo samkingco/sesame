@@ -31,13 +31,8 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         guard credentialRequest.type == .oneTimeCode,
               let request = credentialRequest as? ASOneTimeCodeCredentialRequest,
               let recordId = request.credentialIdentity.recordIdentifier,
-              let accountId = UUID(uuidString: recordId)
-        else {
-            extensionContext.cancelRequest(withError: ASExtensionError(.failed))
-            return
-        }
-
-        guard let account = fetchAccount(id: accountId),
+              let accountId = UUID(uuidString: recordId),
+              let account = fetchAccount(id: accountId),
               account.type == .totp,
               let secret = readSecret(for: accountId),
               let result = generateCode(account: account, secret: secret)
