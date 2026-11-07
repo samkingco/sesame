@@ -33,9 +33,15 @@ enum LaunchMode {
         /// Which demo mode is active, if any. Nil during normal app usage.
         static let demo: Demo? = {
             let args = ProcessInfo.processInfo.arguments
-            if args.contains("--uitests") { return .uiTests }
-            if args.contains("--screenshots") { return .screenshots }
-            if args.contains("--video") { return .video }
+            if args.contains("--uitests") {
+                return .uiTests
+            }
+            if args.contains("--screenshots") {
+                return .screenshots
+            }
+            if args.contains("--video") {
+                return .video
+            }
             return nil
         }()
 

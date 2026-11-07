@@ -94,12 +94,12 @@ struct RestoreBackupView: View {
         }
         #if DEMO_ENABLED
         .onAppear {
-                if let name = ProcessInfo.processInfo.environment["DEMO_RESTORE_FILE"] {
-                    sourceData = Data("fake-backup".utf8)
-                    sourceFileName = name
-                    sourceFileDate = Date(timeIntervalSinceNow: -7200)
-                }
+            if let name = ProcessInfo.processInfo.environment["DEMO_RESTORE_FILE"] {
+                sourceData = Data("fake-backup".utf8)
+                sourceFileName = name
+                sourceFileDate = Date(timeIntervalSinceNow: -7200)
             }
+        }
         #endif
     }
 
@@ -115,7 +115,9 @@ struct RestoreBackupView: View {
 
     private var canUnlock: Bool {
         #if ICLOUD_CAPABLE
-            if selectedBackupID != nil { return sourceData != nil }
+            if selectedBackupID != nil {
+                return sourceData != nil
+            }
         #endif
         return sourceData != nil && sourceFileName != nil
     }

@@ -64,7 +64,9 @@ struct ExportBackupView: View {
             }
         }
         .onChange(of: showExportReady) { _, isShowing in
-            if !isShowing { cleanUpTempFile() }
+            if !isShowing {
+                cleanUpTempFile()
+            }
         }
     }
 
@@ -95,8 +97,8 @@ struct ExportBackupView: View {
 
     // MARK: - File Helpers
 
-    // Intentional DateFormatter — this is a filename component, not user-facing
-    // text, and it's created once in a button action (not on render).
+    /// Intentional DateFormatter — this is a filename component, not user-facing
+    /// text, and it's created once in a button action (not on render).
     static func writeTempFile(blob: Data) throws -> URL {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"

@@ -15,9 +15,9 @@ enum PrivacyWindowService {
     }
 
     static func show() {
-        guard AppLockService.isEnabled, window == nil else { return }
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene }).first else { return }
+        guard AppLockService.isEnabled, window == nil,
+              let scene = UIApplication.shared.connectedScenes
+                  .compactMap({ $0 as? UIWindowScene }).first else { return }
 
         let vc = UIViewController()
         vc.view.backgroundColor = .clear

@@ -12,8 +12,7 @@ enum OTPGenerator {
         counter: UInt64,
         digits: Int
     ) -> String? {
-        guard (6 ... 8).contains(digits) else { return nil }
-        guard !secret.isEmpty else { return nil }
+        guard (6 ... 8).contains(digits), !secret.isEmpty else { return nil }
 
         let key = SymmetricKey(data: secret)
         let message = withUnsafeBytes(of: counter.bigEndian) { Data($0) }

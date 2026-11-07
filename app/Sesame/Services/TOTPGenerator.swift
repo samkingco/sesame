@@ -16,9 +16,7 @@ enum TOTPGenerator {
         period: Int = 30,
         timestamp: Date = .now
     ) -> Result? {
-        guard let secretData = Base32.decode(secret) else { return nil }
-
-        guard let code = OTPGenerator.generate(
+        guard let secretData = Base32.decode(secret), let code = OTPGenerator.generate(
             secret: secretData,
             algorithm: algorithm,
             digits: digits,
