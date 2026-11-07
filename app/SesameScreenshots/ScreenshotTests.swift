@@ -16,19 +16,22 @@ final class ScreenshotTests: XCTestCase {
         // 01 — Personal account list (lands here on launch)
         let list = app.collectionViews.firstMatch
         XCTAssertTrue(list.waitForExistence(timeout: 5))
+        let usesSidebar = hasProfileSidebar()
         saveScreenshot("01-PersonalList")
 
-        // 02 — Profile switcher
-        let profileButton = app.buttons["Profiles"]
-        XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
-        profileButton.tap()
-        saveScreenshot("02-ProfileSwitcher")
+        // 02 — Profile switcher. With a sidebar, 01 already shows the profiles.
+        if !usesSidebar {
+            let profileButton = app.buttons["Profiles"]
+            XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
+            profileButton.tap()
+            saveScreenshot("02-ProfileSwitcher")
 
-        // Dismiss profile menu by re-selecting Personal
-        let personalButton = app.buttons["Personal"]
-        XCTAssertTrue(personalButton.waitForExistence(timeout: 3))
-        personalButton.tap()
-        sleep(1)
+            // Dismiss profile menu by re-selecting Personal
+            let personalButton = app.buttons["Personal"]
+            XCTAssertTrue(personalButton.waitForExistence(timeout: 3))
+            personalButton.tap()
+            sleep(1)
+        }
 
         // 03 — Copy toast on account list
         let githubText = app.staticTexts["GitHub"]
@@ -39,11 +42,7 @@ final class ScreenshotTests: XCTestCase {
 
         // 04 — Add account (switch to Studio first)
         sleep(1)
-        XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
-        profileButton.tap()
-        let studioButton = app.buttons["Studio"]
-        XCTAssertTrue(studioButton.waitForExistence(timeout: 3))
-        studioButton.tap()
+        selectProfile("Studio", usesSidebar: usesSidebar)
         sleep(1)
 
         let addButton = app.buttons["Add Account"]
@@ -53,12 +52,14 @@ final class ScreenshotTests: XCTestCase {
         saveScreenshot("04-AddAccount")
 
         // Dismiss add account sheet
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        sleep(1)
+        closeSheet()
 
         // 05 — Manage profiles
-        XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
-        profileButton.tap()
+        if !usesSidebar {
+            let profileButton = app.buttons["Profiles"]
+            XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
+            profileButton.tap()
+        }
         let manageButton = app.buttons["Manage Profiles"]
         XCTAssertTrue(manageButton.waitForExistence(timeout: 3))
         manageButton.tap()
@@ -66,8 +67,7 @@ final class ScreenshotTests: XCTestCase {
         saveScreenshot("05-ManageProfiles")
 
         // Dismiss manage profiles
-        app.navigationBars["Manage Profiles"].buttons["Close"].tap()
-        sleep(1)
+        closeSheet()
 
         // Settings runs before search to avoid search cancel issues,
         // but numbered to match the intended display order.
@@ -80,16 +80,58 @@ final class ScreenshotTests: XCTestCase {
         saveScreenshot("07-Settings")
 
         // Dismiss settings
-        app.navigationBars["Settings"].buttons["Close"].tap()
-        sleep(1)
+        closeSheet()
 
         // 06 — Search (cross-profile, still on Studio)
-        list.swipeDown()
+        // iPad shows the search field in the toolbar. iPhone Duo has a Search
+        // button in its side toolbar. Other iPhones hide the field above the list.
         let searchField = app.searchFields["Search accounts"]
+        if !(searchField.exists && searchField.isHittable) {
+            let searchButton = app.buttons["Search"]
+            if searchButton.exists {
+                searchButton.tap()
+            } else {
+                list.swipeDown()
+            }
+        }
         XCTAssertTrue(searchField.waitForExistence(timeout: 3))
         searchField.tap()
         searchField.typeText("re")
         sleep(1)
         saveScreenshot("06-Search")
+    }
+
+    // MARK: - Sheets
+
+    /// On the closed iPhone Duo, the sheet's Close button is not inside its
+    /// navigation bar element, so find it from the app.
+    private func closeSheet() {
+        let closeButton = app.buttons["Close"].firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 3))
+        closeButton.tap()
+        sleep(1)
+    }
+
+    // MARK: - Profiles
+
+    /// Regular width (open iPhone Duo, iPad) lists profiles in a sidebar.
+    /// Compact width puts them in the Profiles menu in the toolbar.
+    private func hasProfileSidebar() -> Bool {
+        app.buttons["Manage Profiles"].waitForExistence(timeout: 2)
+    }
+
+    private func selectProfile(_ name: String, usesSidebar: Bool) {
+        if usesSidebar {
+            let row = app.staticTexts[name]
+            XCTAssertTrue(row.waitForExistence(timeout: 3))
+            row.tap()
+        } else {
+            let profileButton = app.buttons["Profiles"]
+            XCTAssertTrue(profileButton.waitForExistence(timeout: 5))
+            profileButton.tap()
+            let target = app.buttons[name]
+            XCTAssertTrue(target.waitForExistence(timeout: 3))
+            target.tap()
+        }
     }
 }

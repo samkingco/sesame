@@ -24,6 +24,18 @@ extension View {
     func sesameRowBackground() -> some View {
         listRowBackground(Color.sesameSurface)
     }
+
+    /// Apply to the root view inside a sheet's NavigationStack when every screen
+    /// in the sheet has a single toolbar button. On iPhone Duo's outer display,
+    /// this keeps the button in a horizontal bar so content uses the full sheet width.
+    @ViewBuilder
+    func sesameHorizontalToolbar() -> some View {
+        if #available(iOS 27.1, *) {
+            toolbarVerticalBehavior(.disabled)
+        } else {
+            self
+        }
+    }
 }
 
 private struct SesameSheetContentModifier: ViewModifier {

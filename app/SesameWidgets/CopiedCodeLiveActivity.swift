@@ -19,11 +19,10 @@ struct CopiedCodeLiveActivity: Widget {
             } compactLeading: {
                 SeedsIcon()
             } compactTrailing: {
-                Text(CodeFormatting.formatted(context.isStale ? nil : context.state.code))
-                    .font(.caption.monospacedDigit())
-                    .bold()
-                    .foregroundStyle(context.isStale ? CodeColorState.empty.color : context.state.colorState.color)
-                    .padding(.trailing, 2)
+                CopiedCodeCompactTrailingView(
+                    code: context.isStale ? nil : context.state.code,
+                    color: context.isStale ? CodeColorState.empty.color : context.state.colorState.color
+                )
             } minimal: {
                 SeedsIcon()
             }

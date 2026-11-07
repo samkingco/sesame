@@ -8,6 +8,7 @@ final class ToastState {
     var message = ""
     var showCount = 0
     var pillFrame: CGRect = .zero
+    var topInset: Double = 0
 }
 
 // MARK: - Manager
@@ -26,6 +27,7 @@ enum Toast {
 
         let isFirstShow = window == nil
         ensureWindow()
+        state.topInset = navigationBarTop()
 
         if isFirstShow {
             // Flush the run loop so the hosting controller renders the hidden
@@ -68,6 +70,32 @@ enum Toast {
         dismissTask?.cancel()
         dismissTask = nil
         state.isVisible = false
+    }
+
+    /// The top of the app's navigation bar, so the toast lines up with it. This is
+    /// not always the safe-area top: on iPhone Duo the status bar is at the side,
+    /// the safe area has no top inset, and the navigation bar starts 24 pt down.
+    private static func navigationBarTop() -> Double {
+        guard let window else { return 0 }
+        let appWindow = window.windowScene?.keyWindow ?? window
+        guard let bar = firstNavigationBar(in: appWindow) else {
+            return appWindow.safeAreaInsets.top
+        }
+        return bar.convert(bar.bounds, to: appWindow).minY
+    }
+
+    /// Depth-first search that skips hidden and transparent views.
+    private static func firstNavigationBar(in view: UIView) -> UINavigationBar? {
+        guard !view.isHidden, view.alpha > 0 else { return nil }
+        if let bar = view as? UINavigationBar {
+            return bar
+        }
+        for subview in view.subviews {
+            if let bar = firstNavigationBar(in: subview) {
+                return bar
+            }
+        }
+        return nil
     }
 
     private static func ensureWindow() {

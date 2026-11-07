@@ -21,6 +21,11 @@ struct ToastView: View {
                 }
             Spacer()
         }
+        // Center on the whole window: the side status bar on iPhone Duo would
+        // otherwise move the toast left.
+        .frame(maxWidth: .infinity)
+        .padding(.top, state.topInset)
+        .ignoresSafeArea()
         .sensoryFeedback(.success, trigger: state.showCount) { _, _ in
             HapticService.isEnabled
         }

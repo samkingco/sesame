@@ -55,10 +55,16 @@ enum CodeColorState: Codable {
 // MARK: - Code formatting
 
 enum CodeFormatting {
-    static func formatted(_ code: String?) -> String {
-        guard let code, !code.isEmpty else { return "••• •••" }
+    /// The code in two groups. An odd length puts the extra digit in the second group.
+    static func halves(_ code: String?) -> (first: String, second: String) {
+        guard let code, !code.isEmpty else { return ("•••", "•••") }
         let mid = code.index(code.startIndex, offsetBy: code.count / 2)
-        return String(code[..<mid]) + " " + String(code[mid...])
+        return (String(code[..<mid]), String(code[mid...]))
+    }
+
+    static func formatted(_ code: String?) -> String {
+        let parts = halves(code)
+        return "\(parts.first) \(parts.second)"
     }
 
     static func spoken(_ code: String?) -> String {

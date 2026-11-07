@@ -7,6 +7,7 @@ struct AccountListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(BackupStore.self) private var backupStore
     @Environment(CodeService.self) private var codeService
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query(
         filter: #Predicate<Account> { $0.deletedAt == nil },
         sort: \Account.createdAt
@@ -25,6 +26,7 @@ struct AccountListView: View {
     @State private var hapticTrigger = 0
     @State private var enlargedAccount: Account?
     @State private var enlargedCodeDetent: PresentationDetent = .medium
+    @State private var compactColumn: NavigationSplitViewColumn = .detail
 
     private let logger = Logger(subsystem: Logger.appSubsystem, category: "AccountListView")
     private let keychain: KeychainServiceProtocol
@@ -42,8 +44,24 @@ struct AccountListView: View {
         return Color(hex: hex)
     }
 
+    /// Regular width (open iPhone Duo, iPad) shows profiles in a sidebar.
+    /// Compact width keeps the profile menu in the toolbar.
+    private var showsProfileSidebar: Bool {
+        horizontalSizeClass == .regular
+    }
+
     var body: some View {
-        NavigationStack {
+        // One split view for every width, so folding or unfolding keeps the
+        // list and its presented sheets in place. Compact width collapses to the detail column.
+        NavigationSplitView(preferredCompactColumn: $compactColumn) {
+            ProfileSidebarView(
+                profiles: profiles,
+                selectedProfileId: viewModel.selectedProfileId,
+                onSelect: switchToProfile,
+                onAddProfile: { showAddProfile = true },
+                onManage: { showManageProfiles = true }
+            )
+        } detail: {
             listContent
         }
         .environment(\.profileTint, currentProfileColor)
@@ -63,6 +81,7 @@ struct AccountListView: View {
                 CodeDetailView(account: account, title: "Code") {
                     enlargedAccount = nil
                 }
+                .sesameHorizontalToolbar()
             }
             .sesameSheet(currentDetent: $enlargedCodeDetent)
         }
@@ -97,6 +116,9 @@ struct AccountListView: View {
             onShowAddAccount: { showAddAccount = true }
         )
         .navigationTitle(currentProfileName)
+        // Compact width collapses to the detail column. The toolbar profile menu
+        // replaces the back button to the sidebar, so hide it.
+        .navigationBarBackButtonHidden(!showsProfileSidebar)
         .searchable(text: $searchText, prompt: "Search accounts")
         .toolbar { toolbarContent }
         .sheet(isPresented: $showAddAccount, onDismiss: { pendingParsed = nil }) {
@@ -149,17 +171,16 @@ struct AccountListView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            ProfilePickerView(
-                profiles: profiles,
-                selectedProfileId: viewModel.selectedProfileId,
-                onSelect: { id in
-                    viewModel.selectedProfileId = id
-                    hapticTrigger += 1
-                },
-                onAddProfile: { showAddProfile = true },
-                onManage: { showManageProfiles = true }
-            )
+        if !showsProfileSidebar {
+            ToolbarItem(placement: .topBarLeading) {
+                ProfilePickerView(
+                    profiles: profiles,
+                    selectedProfileId: viewModel.selectedProfileId,
+                    onSelect: switchToProfile,
+                    onAddProfile: { showAddProfile = true },
+                    onManage: { showManageProfiles = true }
+                )
+            }
         }
         ToolbarItemGroup(placement: .topBarTrailing) {
             Button("Add Account", systemImage: "plus") {
