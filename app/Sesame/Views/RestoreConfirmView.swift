@@ -84,8 +84,8 @@ struct RestoreConfirmView: View {
             Button("Replace All", role: .destructive, action: executeRestore)
             Button("Cancel", role: .cancel) {}
         } message: {
-            // swiftlint:disable:next line_length
             Text(
+                // swiftlint:disable:next line_length
                 "All existing accounts and profiles will be deleted and replaced with this backup. This cannot be undone."
             )
         }

@@ -78,8 +78,8 @@ struct EditProfileView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             if accountCount > 0 {
-                // swiftlint:disable:next line_length
                 Text(
+                    // swiftlint:disable:next line_length
                     "\"\(profile.name)\" has ^[\(accountCount) account](inflect: true). What would you like to do with them?"
                 )
             } else {

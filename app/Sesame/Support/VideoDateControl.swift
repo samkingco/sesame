@@ -46,9 +46,8 @@ import Foundation
                 atPath: controlFile.path
             )[.modificationDate] as? Date
 
-            guard modDate != lastModDate else { return }
-
-            guard let data = try? Data(contentsOf: controlFile),
+            guard modDate != lastModDate,
+                  let data = try? Data(contentsOf: controlFile),
                   let config = try? JSONDecoder().decode(Config.self, from: data) else { return }
 
             lastModDate = modDate

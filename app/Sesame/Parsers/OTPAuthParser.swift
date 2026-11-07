@@ -164,11 +164,7 @@ enum OTPAuthParser {
             .replacing(" ", with: "")
             .uppercased()
 
-        guard isValidBase32(cleaned) else {
-            throw OTPAuthParseError.invalidSecret
-        }
-
-        guard cleaned.count >= 16 else {
+        guard isValidBase32(cleaned), cleaned.count >= 16 else {
             throw OTPAuthParseError.invalidSecret
         }
 

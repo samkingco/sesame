@@ -52,7 +52,9 @@ enum AppLockService {
     }()
 
     static var isDevicePasscodeSet: Bool {
-        if LaunchMode.isSimulator { return true }
+        if LaunchMode.isSimulator {
+            return true
+        }
         return LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
     }
 
@@ -75,7 +77,9 @@ enum AppLockService {
     }
 
     static func authenticate(reason: String = "Unlock Sesame") async -> Bool {
-        if LaunchMode.isSimulator { return true }
+        if LaunchMode.isSimulator {
+            return true
+        }
         let context = LAContext()
         do {
             return try await context.evaluatePolicy(

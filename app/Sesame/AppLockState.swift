@@ -18,6 +18,7 @@ final class AppLockState {
     private(set) var isLocked: Bool
     var backgroundedAt: Date?
     private var isAuthenticating = false
+    private var didFailUnlock = false
 
     private let authContext: AuthenticationContext
     private let isEnabled: @Sendable () -> Bool
@@ -46,10 +47,13 @@ final class AppLockState {
             PrivacyWindowService.show()
         case .background:
             backgroundedAt = .now
+            didFailUnlock = false
         case .active:
             if isLocked {
                 PrivacyWindowService.show()
-                Task { await attemptUnlock() }
+                if !didFailUnlock {
+                    Task { await attemptUnlock() }
+                }
             } else if let backgroundedAt {
                 let elapsed = Date.now.timeIntervalSince(backgroundedAt)
                 self.backgroundedAt = nil
@@ -82,6 +86,7 @@ final class AppLockState {
             success = false
         }
 
+        didFailUnlock = !success
         if success {
             isLocked = false
             backgroundedAt = nil

@@ -50,9 +50,14 @@ final class CodeService {
     func refreshCodes(for accounts: [Account], at date: Date) {
         for account in accounts {
             if let existing = codes[account.id] {
-                if account.type == .hotp, existing.counter == account.counter { continue }
+                if account.type == .hotp, existing.counter == account.counter {
+                    continue
+                }
                 if let windowStart = existing.windowStart, let windowEnd = existing.windowEnd,
-                   date >= windowStart, date < windowEnd { continue }
+                   date >= windowStart, date < windowEnd
+                {
+                    continue
+                }
             }
             guard let secret = secret(for: account.id) else { continue }
             do {

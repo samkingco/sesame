@@ -67,7 +67,9 @@ final class AppClock {
 
     private func startTimer() {
         #if DEMO_ENABLED
-            if LaunchMode.demo == .screenshots { return }
+            if LaunchMode.demo == .screenshots {
+                return
+            }
         #endif
         scheduleTimer(interval: 1)
     }

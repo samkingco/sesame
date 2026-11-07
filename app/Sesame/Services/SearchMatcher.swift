@@ -17,8 +17,12 @@ enum SearchMatcher {
         return accounts
             .compactMap { rank($0, query: query, fuzzyQuery: fuzzyQuery) }
             .sorted { a, b in
-                if a.tier != b.tier { return a.tier > b.tier }
-                if a.quality != b.quality { return a.quality > b.quality }
+                if a.tier != b.tier {
+                    return a.tier > b.tier
+                }
+                if a.quality != b.quality {
+                    return a.quality > b.quality
+                }
                 // Equal ranks stay alphabetical, like the main list.
                 return a.hit.account.precedesAlphabetically(b.hit.account)
             }
@@ -41,10 +45,15 @@ enum SearchMatcher {
         let nameRange = substringRange(of: query, in: name)
 
         if issuerRange != nil || nameRange != nil {
-            let tier = if issuerRange?.lowerBound == 0 { 6 }
-            else if issuerRange != nil { 5 }
-            else if nameRange?.lowerBound == 0 { 4 }
-            else { 3 }
+            let tier = if issuerRange?.lowerBound == 0 {
+                6
+            } else if issuerRange != nil {
+                5
+            } else if nameRange?.lowerBound == 0 {
+                4
+            } else {
+                3
+            }
 
             let hit = SearchHit(
                 account: account,
@@ -98,10 +107,15 @@ enum SearchMatcher {
             }
 
             // Prefer continuing a run, then the start of a word, then the earliest occurrence.
-            let pick: Int? = if i > 0, candidates.first == from { from }
-            else if let start = candidates.first(where: { isWordStart($0, in: chars) }) { start }
-            else if i > 0 { candidates.first }
-            else { nil }
+            let pick: Int? = if i > 0, candidates.first == from {
+                from
+            } else if let start = candidates.first(where: { isWordStart($0, in: chars) }) {
+                start
+            } else if i > 0 {
+                candidates.first
+            } else {
+                nil
+            }
 
             guard let pick else { return nil }
             positions.append(pick)
@@ -110,7 +124,9 @@ enum SearchMatcher {
 
         var quality = 0
         for (n, position) in positions.enumerated() {
-            if isWordStart(position, in: chars) { quality += 3 }
+            if isWordStart(position, in: chars) {
+                quality += 3
+            }
             if n > 0 {
                 let gap = position - positions[n - 1] - 1
                 quality += gap == 0 ? 2 : -gap
@@ -134,8 +150,12 @@ enum SearchMatcher {
         guard index > 0 else { return true }
         let prev = chars[index - 1]
         let char = chars[index]
-        if !prev.isLetter, !prev.isNumber { return true }
-        if prev.isLowercase, char.isUppercase { return true }
+        if !prev.isLetter, !prev.isNumber {
+            return true
+        }
+        if prev.isLowercase, char.isUppercase {
+            return true
+        }
         return prev.isNumber != char.isNumber
     }
 
