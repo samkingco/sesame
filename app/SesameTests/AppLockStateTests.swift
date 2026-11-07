@@ -10,6 +10,7 @@ final class StubAuthContext: AuthenticationContext, @unchecked Sendable {
     nonisolated(unsafe) var canEvaluateResult = true
     nonisolated(unsafe) var evaluateResult = true
     nonisolated(unsafe) var biometryTypeValue: LABiometryType = .faceID
+    nonisolated(unsafe) var evaluateCallCount = 0
 
     func canEvaluatePolicy(_: LAPolicy, error _: NSErrorPointer) -> Bool {
         canEvaluateResult
@@ -19,7 +20,10 @@ final class StubAuthContext: AuthenticationContext, @unchecked Sendable {
         _: LAPolicy,
         localizedReason _: String
     ) async throws -> Bool {
-        if evaluateResult { return true }
+        evaluateCallCount += 1
+        if evaluateResult {
+            return true
+        }
         throw NSError(domain: LAErrorDomain, code: LAError.userCancel.rawValue)
     }
 
@@ -79,6 +83,11 @@ private func makeLockState(
         lockDelay: { delay }
     )
     return (state, authContext)
+}
+
+@MainActor
+private func waitForPendingUnlock() async {
+    try? await Task.sleep(for: .milliseconds(100))
 }
 
 // MARK: - Init
@@ -237,6 +246,63 @@ struct AppLockStateAuthTests {
         await state.attemptUnlock()
 
         #expect(policyTracker.lastPolicy == .deviceOwnerAuthentication)
+    }
+}
+
+// MARK: - Failed unlock
+
+@MainActor
+@Suite(.serialized)
+struct AppLockStateFailedUnlockTests {
+    @Test("Launch while locked prompts")
+    func launchWhileLockedPrompts() async {
+        let (state, auth) = makeLockState()
+
+        state.handleScenePhase(.active)
+        await waitForPendingUnlock()
+
+        #expect(auth.evaluateCallCount == 1)
+    }
+
+    @Test("Return to active after a cancelled prompt does not prompt again")
+    func activeAfterCancelDoesNotPromptAgain() async {
+        let (state, auth) = makeLockState()
+        auth.evaluateResult = false
+
+        await state.attemptUnlock()
+        state.handleScenePhase(.inactive)
+        state.handleScenePhase(.active)
+        await waitForPendingUnlock()
+
+        #expect(auth.evaluateCallCount == 1)
+        #expect(state.isLocked == true)
+    }
+
+    @Test("Unlock after a failed attempt prompts again")
+    func unlockAfterFailurePromptsAgain() async {
+        let (state, auth) = makeLockState()
+        auth.evaluateResult = false
+        await state.attemptUnlock()
+
+        auth.evaluateResult = true
+        await state.attemptUnlock()
+
+        #expect(auth.evaluateCallCount == 2)
+        #expect(state.isLocked == false)
+    }
+
+    @Test("Return from background after a failed attempt prompts again")
+    func returnFromBackgroundAfterFailurePromptsAgain() async {
+        let (state, auth) = makeLockState()
+        auth.evaluateResult = false
+        await state.attemptUnlock()
+
+        state.handleScenePhase(.background)
+        state.handleScenePhase(.inactive)
+        state.handleScenePhase(.active)
+        await waitForPendingUnlock()
+
+        #expect(auth.evaluateCallCount == 2)
     }
 }
 
