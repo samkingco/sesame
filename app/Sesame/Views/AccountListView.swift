@@ -137,8 +137,8 @@ struct AccountListView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: { account in
-            // swiftlint:disable:next line_length
             Text(
+                // swiftlint:disable:next line_length
                 "\"\(account.effectiveIssuer)\" will be moved to Recently Deleted and permanently removed after 48 hours."
             )
         }
