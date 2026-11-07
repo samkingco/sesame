@@ -86,8 +86,9 @@ targets:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
         INFOPLIST_KEY_NSCameraUsageDescription: "Sesame uses the camera to scan QR codes for adding 2FA accounts."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Sesame uses Face ID to protect your accounts."
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_UIRequiresFullScreen: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        # iPad multitasking (no UIRequiresFullScreen) requires all four orientations.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSSupportsLiveActivities: true
       configs:
         Debug:
@@ -100,11 +101,8 @@ targets:
     sources:
       - SesameWidgets
       - path: Sesame/Models/CopiedCodeAttributes.swift
-        group: Shared
       - path: Sesame/Models/OTPTypes.swift
-        group: Shared
       - path: Sesame/Utilities/CodeDisplayHelpers.swift
-        group: Shared
     settings:
       base:
         GENERATE_INFOPLIST_FILE: true
@@ -120,23 +118,14 @@ targets:
     sources:
       - SesameAutoFill
       - path: Sesame/Models/Account.swift
-        group: Shared
       - path: Sesame/Models/OTPTypes.swift
-        group: Shared
       - path: Sesame/Models/Profile.swift
-        group: Shared
       - path: Sesame/Crypto/Base32.swift
-        group: Shared
       - path: Sesame/Crypto/OTPGenerator.swift
-        group: Shared
       - path: Sesame/Support/SharedModelContainer.swift
-        group: Shared
       - path: Sesame/Services/DomainMatcher.swift
-        group: Shared
       - path: Sesame/Services/AutoFillIdentities.swift
-        group: Shared
       - path: Sesame/Extensions/Logger+Subsystem.swift
-        group: Shared
     entitlements:
       path: SesameAutoFill/SesameAutoFill.entitlements
       properties:
