@@ -166,6 +166,7 @@ struct AccountListView: View {
         }
         .sheet(isPresented: $showManageProfiles) {
             ProfileManagementSheet(keychain: keychain, onAdd: switchToProfile)
+                .environment(backupStore)
         }
     }
 
